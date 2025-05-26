@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ReminderCard from './ReminderCard'
 
 export default function Dashboard({ hideSetup }) {
   const [child, setChild] = useState({ name: 'your child' })
@@ -54,18 +55,12 @@ export default function Dashboard({ hideSetup }) {
       <div className="bg-white p-4 rounded-xl shadow">
         <h2 className="text-md font-semibold text-[#1C1C1C]">Reminders</h2>
         <ul className="mt-2 space-y-2">
-          <li className="p-3 bg-[#DFF5E3] rounded flex justify-between items-center">
-            Library Day – pack books
-            {prefs.tapToConfirm && (
-              <button className="text-sm bg-[#004225] text-white px-2 py-1 rounded">Confirm</button>
-            )}
-          </li>
-          <li className="p-3 bg-white border rounded flex justify-between items-center">
-            Swimming – bring towel
-            {prefs.tapToConfirm && (
-              <button className="text-sm border border-[#004225] text-[#004225] px-2 py-1 rounded">Confirm</button>
-            )}
-          </li>
+          {prefs.tapToConfirm && (
+            <>
+              <ReminderCard text="Library Day – pack books" />
+              <ReminderCard text="Swimming – bring towel" />
+            </>
+          )}
         </ul>
       </div>
 
@@ -85,3 +80,12 @@ export default function Dashboard({ hideSetup }) {
         >
           {loading ? 'Asking...' : 'Ask'}
         </button>
+        {response && (
+          <div className="p-3 mt-2 bg-[#ECECEC] rounded text-[#1C1C1C] whitespace-pre-wrap">
+            {response}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
