@@ -6,7 +6,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   webpack: (config) => {
-    config.resolve.alias['@'] = path.resolve(__dirname, 'client');
+    config.resolve.alias['@'] = path.resolve(__dirname);
     return config;
   },
 };
