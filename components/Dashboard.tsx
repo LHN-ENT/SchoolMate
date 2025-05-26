@@ -9,6 +9,10 @@ export default function Dashboard({ hideSetup }) {
     assignToBoth: true
   })
 
+  const [input, setInput] = useState('')
+  const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(false)
+
   useEffect(() => {
     const storedChild = localStorage.getItem('childProfile')
     const storedPrefs = localStorage.getItem('userPreferences')
@@ -16,6 +20,24 @@ export default function Dashboard({ hideSetup }) {
     if (storedChild) setChild(JSON.parse(storedChild))
     if (storedPrefs) setPrefs(JSON.parse(storedPrefs))
   }, [])
+
+  const handleAsk = async () => {
+    if (!input) return
+    setLoading(true)
+    setResponse('')
+    try {
+      const res = await fetch('/api/askSchoolMate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input })
+      })
+      const data = await res.json()
+      setResponse(data.reply || 'No response received.')
+    } catch (err) {
+      setResponse('Error contacting SchoolMate AI.')
+    }
+    setLoading(false)
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F7F7] p-4 space-y-4">
@@ -47,14 +69,19 @@ export default function Dashboard({ hideSetup }) {
         </ul>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow">
+      <div className="bg-white p-4 rounded-xl shadow space-y-2">
         <h2 className="text-md font-semibold text-[#1C1C1C]">Ask SchoolMate</h2>
         <input
           type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           placeholder="What do I need to pack for tomorrow?"
-          className="w-full p-2 border rounded mt-2"
+          className="w-full p-2 border rounded"
         />
-      </div>
-    </div>
-  )
-}
+        <button
+          onClick={handleAsk}
+          disabled={loading}
+          className="w-full py-2 bg-[#004225] text-white rounded disabled:opacity-50"
+        >
+          {loading ? 'Asking...' : 'Ask'}
+        </button>
