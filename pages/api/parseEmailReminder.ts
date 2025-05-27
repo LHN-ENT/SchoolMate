@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { getFirestore } from '@/lib/firestore'
+import { Reminder } from '@/types/reminder'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -11,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing subject or body in request' })
   }
 
-  // Simulate parsed reminder (no OpenAI or Firestore yet)
-  const reminder = {
+  // Simulated reminder (same as before)
+  const reminder: Reminder = {
     childId: child || 'unknown',
     title: subject,
     notes: body,
@@ -24,5 +26,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     createdAt: new Date().toISOString(),
   }
 
-  return res.status(200).json({ success: true, reminder })
+  try {
+    const db = getFirestore()
+    const childPath = `users/lachlan.hart@gmail.com/children/${reminder.childId}/reminders`
+    await db.collection(childPath).add(reminder)
+
+    return res.status(200).json({ success: true, reminder })
+  } catch (err: any) {
+    console.error('Firestore write failed:', err)
+    return res.status(500).json({ error: 'Failed to save reminder' })
+  }
 }
