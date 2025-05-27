@@ -1,32 +1,27 @@
-// lib/firestore.ts
+import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 
-import { getApps, initializeApp, cert, App } from 'firebase-admin/app'
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore'
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
 
-let app: App
-
-const projectId = process.env.FIREBASE_PROJECT_ID
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-
-// 🔒 Log and hard-fail if config is missing
-if (!projectId || !clientEmail || !privateKey) {
-  console.warn('❌ Firebase config missing — Firestore will not initialize')
-  throw new Error('Missing Firebase credentials in environment variables')
-}
+// Check if Firebase is already initialized
+let firebaseApp: FirebaseApp;
 
 if (!getApps().length) {
-  app = initializeApp({
-    credential: cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    }),
-  })
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.warn('[Firebase] Missing config. Check environment variables.');
+  }
+  firebaseApp = initializeApp(firebaseConfig);
 } else {
-  app = getApps()[0]
+  firebaseApp = getApp();
 }
 
-export function getFirestore() {
-  return getAdminFirestore(app)
-}
+const db = getFirestore(firebaseApp);
+
+export { firebaseApp, db };
