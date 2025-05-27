@@ -8,11 +8,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const db = getFirestore()
-    const snapshot = await db.collection('users').limit(1).get()
+    const testDoc = {
+      test: true,
+      timestamp: new Date().toISOString(),
+    }
 
-    return res.status(200).json({ message: '✅ Firestore read successful', count: snapshot.size })
+    await db.collection('test_write_check').add(testDoc)
+
+    return res.status(200).json({ message: '✅ Firestore write successful' })
   } catch (err: any) {
-    console.error('Firestore read failed:', err)
-    return res.status(500).json({ error: 'Firestore read error' })
+    console.error('Firestore write failed:', err)
+    return res.status(500).json({ error: 'Firestore write error' })
   }
 }
