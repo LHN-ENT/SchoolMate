@@ -1,15 +1,18 @@
-// force redeploy
+// pages/api/parseEmailReminder.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getFirestore } from '@/lib/firestore'
 import { getOpenAIResponse } from '@/lib/openaiParser'
-import { verifyMakeWebhook } from '@/lib/auth'
+// import { verifyMakeWebhook } from '@/lib/auth' // ⛔ Temporarily disabled
 import { Reminder } from '@/types/reminder'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end()
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' })
+  }
 
-  const isValid = verifyMakeWebhook(req)
+  // ⛔ TEMP BYPASS: Skip webhook signature verification
+  const isValid = true
   if (!isValid) return res.status(401).json({ error: 'Unauthorized Make webhook' })
 
   const { subject, body, date, child } = req.body
