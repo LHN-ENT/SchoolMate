@@ -1,3 +1,5 @@
+// force redeploy
+
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getFirestore } from '@/lib/firestore'
 import { getOpenAIResponse } from '@/lib/openaiParser'
