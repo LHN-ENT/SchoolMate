@@ -24,10 +24,13 @@ export default function SettingsPage() {
     await signOut({ callbackUrl: '/' })
   }
 
-  const handleDeleteAccount = () => {
-    alert('Account deletion is not yet implemented.')
-    setShowDeleteModal(false)
-  }
+  const handleDeleteAccount = async () => {
+  localStorage.removeItem('userPreferences')
+  localStorage.removeItem('childProfile')
+  localStorage.removeItem('reminders')
+
+  await signOut({ callbackUrl: '/' })
+}
 
   return (
     <div className="flex min-h-screen">
