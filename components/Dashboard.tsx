@@ -1,3 +1,4 @@
+import Sidebar from '../components/Sidebar'
 // ...imports unchanged
 export default function Dashboard({ hideSetup }) {
   // ...state setup unchanged
