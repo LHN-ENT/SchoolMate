@@ -24,7 +24,7 @@ export default function PushNotification() {
         setPermission(perm)
         if (perm === 'granted') {
           getToken(messaging, {
-            vapidKey: 'YOUR_PUBLIC_VAPID_KEY_HERE'
+            vapidKey: 'BOVfHes1_AquCB1h_BP1qkcScTB_9eXFcBAlbJs17IbvMbYua1aGhaevYrdPyeAc5bgR-OdxSy7rL2dk-D_MjnQ'
           }).then((currentToken) => {
             if (currentToken) {
               console.log('FCM Token:', currentToken)
@@ -34,14 +34,14 @@ export default function PushNotification() {
               console.warn('No registration token available.')
             }
           }).catch((err) => {
-            console.error('An error occurred while retrieving token. ', err)
+            console.error('Token retrieval error: ', err)
           })
         }
       })
     }
 
     onMessage(messaging, (payload) => {
-      console.log('Message received. ', payload)
+      console.log('Foreground message:', payload)
     })
   }, [])
 
