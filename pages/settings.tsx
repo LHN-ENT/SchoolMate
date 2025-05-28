@@ -62,63 +62,63 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 🔓 Logout */}
-        <div>
+        {/* 👤 Account Controls */}
+        <div className="pt-8 border-t border-gray-200 space-y-4">
+          <h2 className="text-lg font-semibold">Account Controls</h2>
+
           <button
             onClick={handleLogout}
             className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
           >
             Log Out
           </button>
-        </div>
 
-        {/* 🗑️ Delete Account */}
-        <div>
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="text-red-600 underline"
+            className="text-red-600 underline block"
           >
             Delete Account
           </button>
+
+          <button
+            onClick={() => {
+              if (
+                confirm(
+                  'Are you sure you want to reset your preferences? This will clear all settings and reload the page.'
+                )
+              ) {
+                localStorage.removeItem('userPreferences')
+                window.location.reload()
+              }
+            }}
+            className="text-sm text-gray-500 underline block"
+          >
+            Reset Preferences
+          </button>
         </div>
 
+        {/* 🧨 Confirm Delete Modal */}
         {showDeleteModal && (
           <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded">
-            <p className="mb-2">
+            <p className="mb-2 font-medium">
               Are you sure you want to delete your account? This action cannot be undone.
             </p>
-            <button
-              onClick={handleDeleteAccount}
-              className="bg-red-600 text-white px-4 py-2 rounded mr-2"
-            >
-              Yes, Delete
-            </button>
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleDeleteAccount}
+                className="bg-red-600 text-white px-4 py-2 rounded"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
-        {/* 🧹 Reset Preferences (with confirmation) */}
-<div className="mt-6">
-  <button
-    onClick={() => {
-      if (
-        confirm(
-          'Are you sure you want to reset your preferences? This will clear all settings and reload the page.'
-        )
-      ) {
-        localStorage.removeItem('userPreferences')
-        window.location.reload()
-      }
-    }}
-    className="text-sm text-gray-500 underline"
-  >
-    Reset Preferences
-  </button>
-</div>
       </main>
     </div>
   )
