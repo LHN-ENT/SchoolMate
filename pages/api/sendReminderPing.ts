@@ -1,20 +1,34 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { Readable } from 'stream'
 import { getDocs, collection, doc, getDoc } from 'firebase/firestore'
 import { db } from '../../lib/firestore'
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
+function getRawBody(req: NextApiRequest): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Uint8Array[] = []
+    const readable = req as unknown as Readable
+    readable.on('data', chunk => chunks.push(chunk))
+    readable.on('end', () => resolve(Buffer.concat(chunks)))
+    readable.on('error', reject)
+  })
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  let payload = req.body
-
-  // 🔧 Handle case where body comes in as raw string
-  if (typeof payload === 'string') {
-    try {
-      payload = JSON.parse(payload)
-    } catch (err) {
-      console.error('❌ Invalid JSON body:', payload)
-      return res.status(400).json({ error: 'Invalid JSON' })
-    }
+  let payload
+  try {
+    const rawBody = await getRawBody(req)
+    payload = JSON.parse(rawBody.toString())
+  } catch (err) {
+    console.error('❌ Invalid JSON body')
+    return res.status(400).json({ error: 'Invalid JSON' })
   }
 
   console.log('👉 Incoming body:', payload)
@@ -22,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { subject, body: messageBody, date, childId } = payload
 
   try {
-    // 🔹 If coming from Make (custom reminder payload)
     if (subject && messageBody && childId) {
       await db.collection('reminders').add({
         subject,
@@ -38,10 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ status: 'Custom reminder saved' })
     }
 
-    // 🔹 Otherwise fallback to automated daily reminders
     const usersSnapshot = await getDocs(collection(db, 'users'))
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-
     const result: Record<string, string[]> = {}
 
     for (const userDoc of usersSnapshot.docs) {
