@@ -1,10 +1,14 @@
+// pages/settings.tsx
 import { useRouter } from 'next/router'
+import { useSession, signOut } from 'next-auth/react'
 import { useState, useEffect } from 'react'
-import { signOut } from 'next-auth/react'
 import Sidebar from '../components/Sidebar'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../lib/firestore'
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [prefs, setPrefs] = useState({
     boostedReminders: true,
@@ -18,19 +22,25 @@ export default function SettingsPage() {
 
   useEffect(() => {
     localStorage.setItem('userPreferences', JSON.stringify(prefs))
+    savePrefsToFirestore(prefs)
   }, [prefs])
+
+  const savePrefsToFirestore = async (newPrefs: typeof prefs) => {
+    if (!session?.user?.email) return
+    const ref = doc(db, 'users', session.user.email, 'preferences', 'settings')
+    await setDoc(ref, newPrefs, { merge: true })
+  }
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' })
   }
 
   const handleDeleteAccount = async () => {
-  localStorage.removeItem('userPreferences')
-  localStorage.removeItem('childProfile')
-  localStorage.removeItem('reminders')
-
-  await signOut({ callbackUrl: '/' })
-}
+    localStorage.removeItem('userPreferences')
+    localStorage.removeItem('childProfile')
+    localStorage.removeItem('reminders')
+    await signOut({ callbackUrl: '/' })
+  }
 
   return (
     <div className="flex min-h-screen">
