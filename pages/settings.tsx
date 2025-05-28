@@ -101,6 +101,24 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
+        {/* 🧹 Reset Preferences (with confirmation) */}
+<div className="mt-6">
+  <button
+    onClick={() => {
+      if (
+        confirm(
+          'Are you sure you want to reset your preferences? This will clear all settings and reload the page.'
+        )
+      ) {
+        localStorage.removeItem('userPreferences')
+        window.location.reload()
+      }
+    }}
+    className="text-sm text-gray-500 underline"
+  >
+    Reset Preferences
+  </button>
+</div>
       </main>
     </div>
   )
