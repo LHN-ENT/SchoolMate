@@ -1,23 +1,44 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { getDocs, collection, doc, getDoc } from 'firebase/firestore'
+import { db } from '../../lib/firestore'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { boostedReminders } = req.body
+    console.log(`🚀 Boosted reminder ping triggered at ${new Date().toISOString()}`)
 
-    if (!boostedReminders) {
-      console.log('⚠️ Boosted reminders skipped — opt-out or missing toggle')
-      return res.status(204).end()
+    const usersRef = collection(db, 'users')
+    const usersSnapshot = await getDocs(usersRef)
+
+    const optedInEmails: string[] = []
+
+    for (const userDoc of usersSnapshot.docs) {
+      const email = userDoc.id
+      const settingsRef = doc(db, 'users', email, 'preferences', 'settings')
+      const settingsSnap = await getDoc(settingsRef)
+
+      if (settingsSnap.exists()) {
+        const prefs = settingsSnap.data()
+        if (prefs.boostedReminders) {
+          optedInEmails.push(email)
+          console.log(`📬 Would send boosted reminder to: ${email}`)
+        } else {
+          console.log(`⏸️ Skipping ${email} — opted out`)
+        }
+      } else {
+        console.log(`⚠️ No settings found for ${email}`)
+      }
     }
 
-    console.log('✅ Boosted reminder webhook triggered by Make.com')
-
-    // Future: Fetch users from DB, send email/push/SMS here
-
-    res.status(200).json({ status: 'Boosted reminders sent' })
+    res.status(200).json({
+      status: 'Processed',
+      totalUsers: usersSnapshot.size,
+      optedIn: optedInEmails.length,
+      recipients: optedInEmails
+    })
   } catch (err) {
-    console.error(err)
+    console.error('🔥 Error in boosted reminder handler:', err)
     res.status(500).json({ error: 'Webhook failed' })
   }
 }
