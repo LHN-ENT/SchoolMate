@@ -30,21 +30,11 @@ export default function CalendarPage() {
                 {childProfile.children.map((child, i) => {
                   const activities = []
 
-                  if (child.peDays?.includes(day)) {
-                    activities.push('PE')
-                  }
-                  if (child.libraryDays?.includes(day)) {
-                    activities.push('Library')
-                  }
-                  if (child.houseSportDays?.includes(day)) {
-                    activities.push('House Sport')
-                  }
-                  if (child.activities?.[day]) {
-                    activities.push(child.activities[day])
-                  }
-                  if (child.aftercare) {
-                    activities.push('After School Care')
-                  }
+                  if (child.peDays?.includes(day)) activities.push('PE')
+                  if (child.libraryDays?.includes(day)) activities.push('Library')
+                  if (child.houseSportDays?.includes(day)) activities.push('House Sport')
+                  if (child.activities?.[day]) activities.push(child.activities[day])
+                  if (child.aftercare) activities.push('After School Care')
 
                   return (
                     <div key={i} className="border border-gray-200 rounded p-2">
