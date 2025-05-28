@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
-import ReminderCard from '../components/ReminderCard'
-import Sidebar from '../components/Sidebar'
+// 👆 imports stay the same
 
 export default function Dashboard({ hideSetup }) {
   const [child, setChild] = useState({ name: 'your child' })
@@ -55,17 +53,15 @@ export default function Dashboard({ hideSetup }) {
           Today for {child.name || 'your child'}
         </h1>
 
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="text-md font-semibold text-[#1C1C1C]">Reminders</h2>
-          <ul className="mt-2 space-y-2">
-            {prefs.tapToConfirm && (
-              <>
-                <ReminderCard text="Library Day – pack books" />
-                <ReminderCard text="Swimming – bring towel" />
-              </>
-            )}
-          </ul>
-        </div>
+        {prefs.tapToConfirm && (
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h2 className="text-md font-semibold text-[#1C1C1C]">Reminders</h2>
+            <ul className="mt-2 space-y-2">
+              <ReminderCard text="Library Day – pack books" />
+              <ReminderCard text="Swimming – bring towel" />
+            </ul>
+          </div>
+        )}
 
         <div className="bg-white p-4 rounded-xl shadow space-y-2">
           <h2 className="text-md font-semibold text-[#1C1C1C]">Ask SchoolMate</h2>
