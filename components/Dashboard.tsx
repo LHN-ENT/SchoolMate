@@ -1,7 +1,29 @@
+import { useEffect, useState } from 'react'
+import ReminderCard from '../components/ReminderCard'
 import Sidebar from '../components/Sidebar'
-// ...imports unchanged
+
 export default function Dashboard({ hideSetup }) {
-  // ...state setup unchanged
+  const [child, setChild] = useState({ name: 'your child' })
+  const [prefs, setPrefs] = useState({
+    dailyDigest: false,
+    weeklyDigest: false,
+    tapToConfirm: true,
+    assignToBoth: true
+  })
+  const [reminders, setReminders] = useState<string[]>([])
+  const [input, setInput] = useState('')
+  const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const storedChild = localStorage.getItem('childProfile')
+    const storedPrefs = localStorage.getItem('userPreferences')
+    const storedReminders = localStorage.getItem('reminders')
+
+    if (storedChild) setChild(JSON.parse(storedChild))
+    if (storedPrefs) setPrefs(JSON.parse(storedPrefs))
+    if (storedReminders) setReminders(JSON.parse(storedReminders))
+  }, [])
 
   return (
     <div className="flex min-h-screen">
@@ -14,8 +36,8 @@ export default function Dashboard({ hideSetup }) {
         )}
 
         <h1 className="text-xl font-bold text-[#004225]">
-  Today for {child?.name || 'your child'}
-</h1>
+          Today for {child?.name || 'your child'}
+        </h1>
 
         {prefs.tapToConfirm && (
           <section className="bg-white p-5 rounded-xl shadow space-y-2">
