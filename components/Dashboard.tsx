@@ -13,9 +13,9 @@ export default function Dashboard({ hideSetup }) {
           </div>
         )}
 
-        <h1 className="text-2xl font-bold text-[#004225]">
-          Today for {child.name || 'your child'}
-        </h1>
+        <h1 className="text-xl font-bold text-[#004225]">
+  Today for {child?.name || 'your child'}
+</h1>
 
         {prefs.tapToConfirm && (
           <section className="bg-white p-5 rounded-xl shadow space-y-2">
