@@ -1,4 +1,6 @@
-// 👆 imports stay the same
+import { useEffect, useState } from 'react'
+import ReminderCard from '../components/ReminderCard'
+import Sidebar from '../components/Sidebar'
 
 export default function Dashboard({ hideSetup }) {
   const [child, setChild] = useState({ name: 'your child' })
@@ -9,6 +11,7 @@ export default function Dashboard({ hideSetup }) {
     assignToBoth: true
   })
 
+  const [reminders, setReminders] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,9 +19,11 @@ export default function Dashboard({ hideSetup }) {
   useEffect(() => {
     const storedChild = localStorage.getItem('childProfile')
     const storedPrefs = localStorage.getItem('userPreferences')
+    const storedReminders = localStorage.getItem('reminders')
 
     if (storedChild) setChild(JSON.parse(storedChild))
     if (storedPrefs) setPrefs(JSON.parse(storedPrefs))
+    if (storedReminders) setReminders(JSON.parse(storedReminders))
   }, [])
 
   const handleAsk = async () => {
@@ -57,8 +62,11 @@ export default function Dashboard({ hideSetup }) {
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="text-md font-semibold text-[#1C1C1C]">Reminders</h2>
             <ul className="mt-2 space-y-2">
-              <ReminderCard text="Library Day – pack books" />
-              <ReminderCard text="Swimming – bring towel" />
+              {reminders.length > 0 ? (
+                reminders.map((r, i) => <ReminderCard key={i} text={r} />)
+              ) : (
+                <li className="text-sm text-gray-500">No reminders today.</li>
+              )}
             </ul>
           </div>
         )}
