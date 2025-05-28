@@ -1,10 +1,22 @@
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { useEffect } from 'react'
+import { signIn, signOut, useSession } from 'next-auth/react'
+import { useRouter } from 'next/router'
 
 export default function Welcome() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    const hasChild = localStorage.getItem('childProfile')
+    const hasApps = localStorage.getItem('connectedApps')
+
+    if (session && hasChild && hasApps) {
+      router.replace('/dashboard')
+    }
+  }, [session, router])
 
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
 
   if (session) {
@@ -15,7 +27,7 @@ export default function Welcome() {
           <p className="text-[#5A5A5A]">You're signed in as {session.user?.email}</p>
 
           <button
-            onClick={() => window.location.href = '/dashboard'}
+            onClick={() => router.push('/dashboard')}
             className="w-full py-2 rounded text-white bg-[#004225] hover:bg-[#00361b] transition"
           >
             Go to Dashboard
@@ -29,7 +41,7 @@ export default function Welcome() {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -46,5 +58,5 @@ export default function Welcome() {
         </button>
       </div>
     </div>
-  );
+  )
 }
