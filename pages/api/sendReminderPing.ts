@@ -6,39 +6,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    console.log(`🚀 Boosted reminder ping triggered at ${new Date().toISOString()}`)
+    const usersSnapshot = await getDocs(collection(db, 'users'))
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
-    const usersRef = collection(db, 'users')
-    const usersSnapshot = await getDocs(usersRef)
-
-    const optedInEmails: string[] = []
+    const result: Record<string, string[]> = {}
 
     for (const userDoc of usersSnapshot.docs) {
       const email = userDoc.id
-      const settingsRef = doc(db, 'users', email, 'preferences', 'settings')
-      const settingsSnap = await getDoc(settingsRef)
 
-      if (settingsSnap.exists()) {
-        const prefs = settingsSnap.data()
-        if (prefs.boostedReminders) {
-          optedInEmails.push(email)
-          console.log(`📬 Would send boosted reminder to: ${email}`)
-        } else {
-          console.log(`⏸️ Skipping ${email} — opted out`)
-        }
-      } else {
-        console.log(`⚠️ No settings found for ${email}`)
+      // Check user preferences
+      const prefsRef = doc(db, 'users', email, 'preferences', 'settings')
+      const prefsSnap = await getDoc(prefsRef)
+      const prefs = prefsSnap.exists() ? prefsSnap.data() : {}
+
+      if (!prefs.boostedReminders) {
+        console.log(`⏸️ Skipping ${email} — opted out of boosted reminders`)
+        continue
       }
+
+      // Check child profile
+      const profileRef = doc(db, 'users', email, 'childProfile', 'info')
+      const profileSnap = await getDoc(profileRef)
+      const profile = profileSnap.exists() ? profileSnap.data() : null
+
+      if (!profile?.children || profile.children.length === 0) {
+        console.log(`⚠️ No children for ${email}`)
+        continue
+      }
+
+      const reminders: string[] = []
+
+      profile.children.forEach(child => {
+        if (child.peDays?.includes(today)) {
+          reminders.push(`${child.name} has PE today – pack uniform`)
+        }
+        if (child.libraryDays?.includes(today)) {
+          reminders.push(`${child.name} has Library today – return books`)
+        }
+        if (child.houseSportDays?.includes(today)) {
+          reminders.push(`${child.name} has House Sport today – sports gear needed`)
+        }
+        const activity = child.activities?.[today]
+        if (activity) {
+          reminders.push(`${child.name} has ${activity} today`)
+        }
+      })
+
+      result[email] = reminders
+      console.log(`✅ ${email} reminders:`, reminders)
     }
 
-    res.status(200).json({
-      status: 'Processed',
-      totalUsers: usersSnapshot.size,
-      optedIn: optedInEmails.length,
-      recipients: optedInEmails
-    })
+    res.status(200).json({ status: 'Reminders generated', result })
   } catch (err) {
-    console.error('🔥 Error in boosted reminder handler:', err)
-    res.status(500).json({ error: 'Webhook failed' })
+    console.error('🔥 sendReminderPing failed:', err)
+    res.status(500).json({ error: 'Internal server error' })
   }
 }
