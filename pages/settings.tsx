@@ -2,6 +2,7 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { signOut } from 'next-auth/react'
+import Sidebar from '../components/Sidebar'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -19,42 +20,47 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <main className="flex-1 p-6">
+        <h1 className="text-2xl font-bold mb-4">Settings</h1>
 
-      <button
-        onClick={handleLogout}
-        className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
-      >
-        Log Out
-      </button>
-
-      <div className="mt-6">
         <button
-          onClick={() => setShowDeleteModal(true)}
-          className="text-red-600 underline"
+          onClick={handleLogout}
+          className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
         >
-          Delete Account
+          Log Out
         </button>
-      </div>
 
-      {showDeleteModal && (
-        <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded">
-          <p className="mb-2">Are you sure you want to delete your account? This action cannot be undone.</p>
+        <div className="mt-6">
           <button
-            onClick={handleDeleteAccount}
-            className="bg-red-600 text-white px-4 py-2 rounded mr-2"
+            onClick={() => setShowDeleteModal(true)}
+            className="text-red-600 underline"
           >
-            Yes, Delete
-          </button>
-          <button
-            onClick={() => setShowDeleteModal(false)}
-            className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-          >
-            Cancel
+            Delete Account
           </button>
         </div>
-      )}
+
+        {showDeleteModal && (
+          <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded">
+            <p className="mb-2">
+              Are you sure you want to delete your account? This action cannot be undone.
+            </p>
+            <button
+              onClick={handleDeleteAccount}
+              className="bg-red-600 text-white px-4 py-2 rounded mr-2"
+            >
+              Yes, Delete
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </main>
     </div>
   )
 }
