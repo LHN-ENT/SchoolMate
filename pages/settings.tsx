@@ -1,4 +1,3 @@
-// pages/settings.tsx
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
@@ -22,8 +21,7 @@ export default function SettingsPage() {
   }, [prefs])
 
   const handleLogout = async () => {
-    await signOut({ redirect: false })
-router.push('/')
+    await signOut({ callbackUrl: '/' })
   }
 
   const handleDeleteAccount = () => {
