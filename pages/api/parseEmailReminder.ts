@@ -13,14 +13,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    await db.collection('reminders').add({
-      subject,
-      body,
+    // Attempt to extract a title and date from the body
+    const lowerBody = body.toLowerCase();
+
+    // Simple heuristic: look for known formats
+    const dateMatch = body.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/) || body.match(/\b(\d{1,2} [A-Za-z]+ \d{4})\b/);
+    const date = dateMatch ? dateMatch[0] : null;
+
+    const reminderTitle = subject || 'Untitled Reminder';
+
+    const newReminder = {
       childId,
-      createdAt: new Date().toISOString(),
+      title: reminderTitle,
+      details: body,
       parsed: true,
-    });
-    return res.status(200).json({ message: 'Reminder parsed and saved' });
+      source: 'email',
+      createdAt: new Date().toISOString(),
+      date, // Optional: extracted from body
+    };
+
+    await db.collection('reminders').add(newReminder);
+    return res.status(200).json({ message: 'Parsed and saved', reminder: newReminder });
   } catch (error) {
     console.error('Error saving reminder:', error);
     return res.status(500).json({ message: 'Internal server error' });
