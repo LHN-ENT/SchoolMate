@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import ReminderCard from '../components/ReminderCard'
 import Sidebar from '../components/Sidebar'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { db } from '@/lib/firestore'
 
 export default function Dashboard({ hideSetup }) {
   const [childProfile, setChildProfile] = useState(null)
@@ -10,7 +12,7 @@ export default function Dashboard({ hideSetup }) {
     tapToConfirm: true,
     assignToBoth: true
   })
-  const [reminders, setReminders] = useState<string[]>([])
+  const [reminders, setReminders] = useState([])
   const [input, setInput] = useState('')
   const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,12 +20,38 @@ export default function Dashboard({ hideSetup }) {
   useEffect(() => {
     const storedChild = localStorage.getItem('childProfile')
     const storedPrefs = localStorage.getItem('userPreferences')
-    const storedReminders = localStorage.getItem('reminders')
 
     if (storedChild) setChildProfile(JSON.parse(storedChild))
     if (storedPrefs) setPrefs(JSON.parse(storedPrefs))
-    if (storedReminders) setReminders(JSON.parse(storedReminders))
   }, [])
+
+  useEffect(() => {
+    const fetchReminders = async () => {
+      if (!childProfile?.children?.length) return
+
+      try {
+        const childIds = childProfile.children.map((c) => c.id || c.name)
+        const q = query(collection(db, 'reminders'), where('childId', 'in', childIds))
+        const snapshot = await getDocs(q)
+
+        const allReminders = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        const filtered = allReminders.filter((reminder) => {
+          // If digest is off, show everything
+          if (!prefs.dailyDigest && !prefs.weeklyDigest) return true
+
+          const today = new Date().toISOString().split('T')[0]
+          const reminderDate = reminder.date || reminder.createdAt?.split('T')[0]
+          return prefs.dailyDigest ? reminderDate === today : true // Simplified weekly logic
+        })
+
+        setReminders(filtered)
+      } catch (err) {
+        console.error('Failed to load reminders:', err)
+      }
+    }
+
+    fetchReminders()
+  }, [childProfile, prefs])
 
   const handleAsk = async () => {
     if (!input.trim()) return
@@ -88,7 +116,7 @@ export default function Dashboard({ hideSetup }) {
             <h2 className="text-lg font-semibold text-[#1C1C1C]">Reminders</h2>
             <ul className="space-y-2">
               {reminders.length > 0 ? (
-                reminders.map((r, i) => <ReminderCard key={i} text={r} />)
+                reminders.map((r, i) => <ReminderCard key={i} text={r.title || r.subject} />)
               ) : (
                 <li className="text-sm text-gray-500">No reminders today.</li>
               )}
