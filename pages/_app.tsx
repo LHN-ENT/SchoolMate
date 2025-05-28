@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
-import { signOut } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import { doc, setDoc } from 'firebase/firestore'
@@ -8,7 +7,8 @@ import { db } from '../lib/firestore'
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const sessionData = useSession()
+  const session = sessionData?.data
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [prefs, setPrefs] = useState({
     boostedReminders: true,
