@@ -3,7 +3,7 @@ import ReminderCard from '../components/ReminderCard'
 import Sidebar from '../components/Sidebar'
 
 export default function Dashboard({ hideSetup }) {
-  const [child, setChild] = useState({ name: 'your child' })
+  const [childProfile, setChildProfile] = useState(null)
   const [prefs, setPrefs] = useState({
     dailyDigest: false,
     weeklyDigest: false,
@@ -20,7 +20,7 @@ export default function Dashboard({ hideSetup }) {
     const storedPrefs = localStorage.getItem('userPreferences')
     const storedReminders = localStorage.getItem('reminders')
 
-    if (storedChild) setChild(JSON.parse(storedChild))
+    if (storedChild) setChildProfile(JSON.parse(storedChild))
     if (storedPrefs) setPrefs(JSON.parse(storedPrefs))
     if (storedReminders) setReminders(JSON.parse(storedReminders))
   }, [])
@@ -32,7 +32,7 @@ export default function Dashboard({ hideSetup }) {
       const res = await fetch('/api/askSchoolMate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: input, child })
+        body: JSON.stringify({ query: input, child: childProfile })
       })
       const data = await res.json()
       setResponse(data.answer || 'No answer returned.')
@@ -55,8 +55,33 @@ export default function Dashboard({ hideSetup }) {
         )}
 
         <h1 className="text-xl font-bold text-[#004225]">
-          Today for {child?.name || 'your child'}
+          Welcome{childProfile?.children?.length === 1 ? `, ${childProfile.children[0].name}` : ''}
         </h1>
+
+        {childProfile?.children?.map((child, i) => (
+          <section key={i} className="bg-white p-5 rounded-xl shadow space-y-2">
+            <h2 className="text-lg font-semibold text-[#1C1C1C]">
+              {child.name} ({child.year}) — {child.teacher}
+            </h2>
+
+            <p className="text-sm text-gray-600">
+              School: {child.startTime || '??'} to {child.endTime || '??'}{' '}
+              {child.aftercare && '(Aftercare enabled)'}
+            </p>
+
+            <div className="text-sm text-gray-700 space-y-1">
+              <p><strong>PE:</strong> {child.peDays?.join(', ') || 'None'}</p>
+              <p><strong>Library:</strong> {child.libraryDays?.join(', ') || 'None'}</p>
+              <p><strong>House Sport:</strong> {child.houseSportDays?.join(', ') || 'None'}</p>
+              <p><strong>Activities:</strong></p>
+              <ul className="pl-4 list-disc">
+                {Object.entries(child.activities || {}).map(([day, activity]) =>
+                  activity ? <li key={day}>{day}: {activity}</li> : null
+                )}
+              </ul>
+            </div>
+          </section>
+        ))}
 
         {prefs.tapToConfirm && (
           <section className="bg-white p-5 rounded-xl shadow space-y-2">
