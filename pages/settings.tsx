@@ -23,7 +23,7 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
-    router.push('/auth/signin')
+router.push('/')
   }
 
   const handleDeleteAccount = () => {
