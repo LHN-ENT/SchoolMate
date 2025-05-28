@@ -43,6 +43,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { subject, body: messageBody, date, childId } = payload
 
   try {
+    if (!db?.app?.name) {
+      throw new Error('❌ Firebase DB not initialized. Check env vars in Vercel.')
+    }
+
     if (subject && messageBody && childId) {
       await db.collection('reminders').add({
         subject,
@@ -108,6 +112,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json({ status: 'Auto reminders generated', result })
   } catch (err) {
     console.error('🔥 sendReminderPing failed:', err)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: err.message || 'Internal server error' })
   }
 }
