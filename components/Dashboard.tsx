@@ -25,6 +25,25 @@ export default function Dashboard({ hideSetup }) {
     if (storedReminders) setReminders(JSON.parse(storedReminders))
   }, [])
 
+  const handleAsk = async () => {
+    if (!input.trim()) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/askSchoolMate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: input, child })
+      })
+      const data = await res.json()
+      setResponse(data.answer || 'No answer returned.')
+    } catch (err) {
+      console.error(err)
+      setResponse('There was an error. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
