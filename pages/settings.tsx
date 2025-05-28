@@ -1,12 +1,25 @@
 // pages/settings.tsx
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
 import Sidebar from '../components/Sidebar'
 
 export default function SettingsPage() {
   const router = useRouter()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [prefs, setPrefs] = useState({
+    boostedReminders: true,
+    tapToConfirm: true
+  })
+
+  useEffect(() => {
+    const stored = localStorage.getItem('userPreferences')
+    if (stored) setPrefs(JSON.parse(stored))
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('userPreferences', JSON.stringify(prefs))
+  }, [prefs])
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -14,7 +27,6 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = () => {
-    // Placeholder: connect to real delete logic later
     alert('Account deletion is not yet implemented.')
     setShowDeleteModal(false)
   }
@@ -22,17 +34,48 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      <main className="flex-1 p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Settings</h1>
 
-        <button
-          onClick={handleLogout}
-          className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
-        >
-          Log Out
-        </button>
+        {/* 🔔 Notification Preferences */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[#1C1C1C]">Boosted Reminder Ping (7am)</span>
+            <input
+              type="checkbox"
+              checked={prefs.boostedReminders}
+              onChange={() =>
+                setPrefs({ ...prefs, boostedReminders: !prefs.boostedReminders })
+              }
+              className="w-5 h-5"
+            />
+          </div>
 
-        <div className="mt-6">
+          <div className="flex items-center justify-between">
+            <span className="text-[#1C1C1C]">Tap-to-Confirm Reminders</span>
+            <input
+              type="checkbox"
+              checked={prefs.tapToConfirm}
+              onChange={() =>
+                setPrefs({ ...prefs, tapToConfirm: !prefs.tapToConfirm })
+              }
+              className="w-5 h-5"
+            />
+          </div>
+        </div>
+
+        {/* 🔓 Logout */}
+        <div>
+          <button
+            onClick={handleLogout}
+            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
+          >
+            Log Out
+          </button>
+        </div>
+
+        {/* 🗑️ Delete Account */}
+        <div>
           <button
             onClick={() => setShowDeleteModal(true)}
             className="text-red-600 underline"
