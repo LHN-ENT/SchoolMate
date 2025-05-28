@@ -5,7 +5,26 @@ import { db } from '../../lib/firestore'
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  const { subject, body, date, childId, type } = req.body
+
   try {
+    // 🔹 If this is a Make-style reminder payload, just add it directly
+    if (subject && body && childId) {
+      await db.collection('reminders').add({
+        subject,
+        body,
+        date: date || null,
+        childId,
+        parsed: true,
+        createdAt: new Date().toISOString(),
+        source: 'make',
+      })
+
+      console.log(`📬 Custom reminder saved for child: ${childId}`)
+      return res.status(200).json({ status: 'Custom reminder saved' })
+    }
+
+    // 🔹 Otherwise fallback to automated reminder logic
     const usersSnapshot = await getDocs(collection(db, 'users'))
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
@@ -14,22 +33,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (const userDoc of usersSnapshot.docs) {
       const email = userDoc.id
 
-      // Check user preferences
       const prefsRef = doc(db, 'users', email, 'preferences', 'settings')
       const prefsSnap = await getDoc(prefsRef)
       const prefs = prefsSnap.exists() ? prefsSnap.data() : {}
 
       if (!prefs.boostedReminders) {
-        console.log(`⏸️ Skipping ${email} — opted out of boosted reminders`)
+        console.log(`⏸️ Skipping ${email} — opted out`)
         continue
       }
 
-      // Check child profile
       const profileRef = doc(db, 'users', email, 'childProfile', 'info')
       const profileSnap = await getDoc(profileRef)
       const profile = profileSnap.exists() ? profileSnap.data() : null
 
-      if (!profile?.children || profile.children.length === 0) {
+      if (!profile?.children?.length) {
         console.log(`⚠️ No children for ${email}`)
         continue
       }
@@ -56,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log(`✅ ${email} reminders:`, reminders)
     }
 
-    res.status(200).json({ status: 'Reminders generated', result })
+    res.status(200).json({ status: 'Auto reminders generated', result })
   } catch (err) {
     console.error('🔥 sendReminderPing failed:', err)
     res.status(500).json({ error: 'Internal server error' })
