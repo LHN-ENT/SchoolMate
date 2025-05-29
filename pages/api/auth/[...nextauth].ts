@@ -31,6 +31,9 @@ export default NextAuth({
         image: token.picture || ''
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      return baseUrl + '/dashboard'
     }
   },
   debug: true,
