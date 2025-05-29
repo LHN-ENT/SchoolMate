@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../lib/firebaseClient'
 import Sidebar from '../../components/Sidebar'
@@ -14,16 +13,24 @@ type Reminder = {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
+  const [parentId, setParentId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('parentProfile')
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      setParentId(parsed.parentId || null)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchReminders = async () => {
-      if (status !== 'authenticated' || !session?.user?.email) return
+      if (!parentId) return
 
       try {
-        const q = query(collection(db, 'reminders'), where('parentId', '==', session.user.email))
+        const q = query(collection(db, 'reminders'), where('parentId', '==', parentId))
         const snapshot = await getDocs(q)
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -39,7 +46,7 @@ export default function Dashboard() {
     }
 
     fetchReminders()
-  }, [session, status])
+  }, [parentId])
 
   return (
     <div className="flex">
