@@ -7,38 +7,38 @@ import { doc, getDoc } from 'firebase/firestore'
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [checked, setChecked] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkOnboarding = async () => {
-      if (status !== 'authenticated') return
-
-      const email = session?.user?.email
-      if (!email) {
-        console.warn('⚠️ No email in session.user')
+    const checkAndRedirect = async () => {
+      if (status === 'loading') return
+      if (status !== 'authenticated' || !session?.user?.email) {
+        console.warn('⚠️ No valid session — sending to sign in')
+        router.replace('/auth/signin')
         return
       }
 
       try {
-        const docRef = doc(db, 'users', email, 'childProfile', 'info')
+        const docRef = doc(db, 'users', session.user.email, 'childProfile', 'info')
         const snap = await getDoc(docRef)
 
-        if (!snap.exists()) {
-          console.log('🔁 Redirecting to onboarding')
-          router.replace('/onboarding')
-        } else {
-          console.log('✅ Redirecting to dashboard')
+        if (snap.exists()) {
+          console.log('✅ Found child profile — to dashboard')
           router.replace('/dashboard')
+        } else {
+          console.log('🔁 No child — to onboarding')
+          router.replace('/onboarding')
         }
       } catch (err) {
-        console.error('❌ Firestore error during onboarding check:', err)
+        console.error('❌ Firestore error:', err)
+        router.replace('/onboarding') // fallback
       } finally {
-        setChecked(true)
+        setLoading(false)
       }
     }
 
-    checkOnboarding()
-  }, [session, status])
+    checkAndRedirect()
+  }, [status, session, router])
 
-  return <p className="p-6">{checked ? 'Redirecting...' : 'Loading...'}</p>
+  return <p className="p-6">{loading ? 'Loading...' : 'Redirecting...'}</p>
 }
