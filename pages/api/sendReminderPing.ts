@@ -4,7 +4,30 @@ console.log('🔥 FILE LOADED: sendReminderPing.ts')
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Readable } from 'stream'
 import { getDocs, collection, doc, getDoc } from 'firebase-admin/firestore'
-import { dbAdmin as db } from '../../lib/firebaseAdmin'
+import * as admin from 'firebase-admin'
+
+const privateKey = process.env.FIREBASE_PRIVATE_KEY
+  ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+  : undefined
+
+if (!admin.apps.length) {
+  if (!privateKey || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PROJECT_ID) {
+    throw new Error('❌ Firebase Admin SDK credentials are missing. Check environment variables.')
+  }
+
+  console.log('🛠️ Initializing Firebase Admin...')
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey,
+    }),
+  })
+} else {
+  console.log('✅ Firebase Admin already initialized')
+}
+
+const db = admin.firestore()
 
 export const config = {
   api: {
