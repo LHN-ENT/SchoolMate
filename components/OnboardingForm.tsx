@@ -87,13 +87,20 @@ export default function OnboardingForm() {
         dailyDigest
       }
 
+      console.log('👉 Submitting profile:', childProfile)
       localStorage.setItem('childProfile', JSON.stringify(childProfile))
 
-      if (session?.user?.email) {
-        const ref = doc(db, 'users', session.user.email, 'childProfile', 'info')
-        await setDoc(ref, childProfile, { merge: true })
+      if (!session?.user?.email) {
+        console.warn('⚠ No session email found:', session)
+        throw new Error('No session email')
       }
 
+      const ref = doc(db, 'users', session.user.email, 'childProfile', 'info')
+      console.log('📌 Firebase ref path:', ref.path)
+
+      await setDoc(ref, childProfile, { merge: true })
+
+      console.log('✅ Firebase setDoc success')
       router.push('/dashboard')
     } catch (error) {
       console.error('❌ Onboarding error:', error)
@@ -108,7 +115,7 @@ export default function OnboardingForm() {
       {!session && (
         <button
           type="button"
-          onClick={() => signIn('google')}
+          onClick={() => signIn('google', { callbackUrl: '/onboarding' })}
           className="w-full py-2 bg-red-500 text-white rounded"
         >
           Sign in with Google
