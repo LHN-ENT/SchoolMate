@@ -2,24 +2,24 @@
 import { google } from 'googleapis'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { dbAdmin as db } from '../../lib/firebaseAdmin'
-import { getSession } from 'next-auth/react'
+import { getToken } from 'next-auth/jwt'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    // 🔐 Auth: get session token from user
-    const session = await getSession({ req })
-    if (!session?.accessToken) {
+    // 🔐 Get token from NextAuth (works in API routes)
+    const token = await getToken({ req })
+    if (!token?.accessToken) {
       return res.status(401).json({ error: 'Not authenticated' })
     }
 
     // 🧠 Init Gmail API with token
     const auth = new google.auth.OAuth2()
-    auth.setCredentials({ access_token: session.accessToken })
+    auth.setCredentials({ access_token: token.accessToken })
     const gmail = google.gmail({ version: 'v1', auth })
 
-    // 📨 Fetch recent emails from inbox (past 24h)
+    // 📥 Fetch recent emails from inbox (past 24h)
     const { data } = await gmail.users.messages.list({
       userId: 'me',
       q: 'newer_than:1d',
@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const snippet = full.data.snippet || ''
       const date = new Date(parseInt(full.data.internalDate || '0'))
 
-      // 🧠 Simple match on child name
+      // 👶 Simple match on child name
       let childId = 'unknown'
       if (/reilly/i.test(subject + snippet)) childId = 'reilly123'
       if (/flynn/i.test(subject + snippet)) childId = 'flynn123'
@@ -64,7 +64,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     await batch.commit()
-
     res.status(200).json({ status: 'Emails parsed and saved' })
   } catch (err) {
     console.error('❌ Error parsing Gmail:', err)
