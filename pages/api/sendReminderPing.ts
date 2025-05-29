@@ -1,33 +1,7 @@
-// 🔥 FILE LOADED: sendReminderPing.ts
-console.log('🔥 FILE LOADED: sendReminderPing.ts')
-
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Readable } from 'stream'
-import * as admin from 'firebase-admin'
 import { getDocs, collection, doc, getDoc } from 'firebase-admin/firestore'
-
-const privateKey = process.env.FIREBASE_PRIVATE_KEY
-  ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : undefined
-
-if (!admin.apps.length) {
-  if (!privateKey || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PROJECT_ID) {
-    throw new Error('❌ Firebase Admin SDK credentials are missing. Check environment variables.')
-  }
-
-  console.log('🛠️ Initializing Firebase Admin...')
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey,
-    }),
-  })
-} else {
-  console.log('✅ Firebase Admin already initialized')
-}
-
-const db = admin.firestore()
+import { dbAdmin as db } from '../../lib/firebaseAdmin'
 
 export const config = {
   api: {
@@ -46,8 +20,6 @@ function getRawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('🔥 HANDLER ENTERED: sendReminderPing')
-
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -63,17 +35,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const rawBody = await getRawBody(req)
     payload = JSON.parse(rawBody.toString())
-  } catch (err) {
-    console.error('❌ Invalid JSON body')
+  } catch {
     return res.status(400).json({ error: 'Invalid JSON' })
   }
-
-  console.log('👉 Incoming body:', payload)
 
   const { subject, body: messageBody, date, childId } = payload
 
   if (!db) {
-    throw new Error('❌ Firestore instance not available. DB init failed.')
+    return res.status(500).json({ error: 'Firestore not initialized' })
   }
 
   try {
@@ -88,7 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         source: 'make',
       })
 
-      console.log(`📬 Custom reminder saved for child: ${childId}`)
       return res.status(200).json({ status: 'Custom reminder saved' })
     }
 
@@ -103,19 +71,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const prefsSnap = await getDoc(prefsRef)
       const prefs = prefsSnap.exists() ? prefsSnap.data() : {}
 
-      if (!prefs.boostedReminders) {
-        console.log(`⏸️ Skipping ${email} — opted out`)
-        continue
-      }
+      if (!prefs.boostedReminders) continue
 
       const profileRef = doc(db, 'users', email, 'childProfile', 'info')
       const profileSnap = await getDoc(profileRef)
       const profile = profileSnap.exists() ? profileSnap.data() : null
 
-      if (!profile?.children?.length) {
-        console.log(`⚠️ No children for ${email}`)
-        continue
-      }
+      if (!profile?.children?.length) continue
 
       const reminders: string[] = []
 
@@ -136,12 +98,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
 
       result[email] = reminders
-      console.log(`✅ ${email} reminders:`, reminders)
     }
 
     res.status(200).json({ status: 'Auto reminders generated', result })
   } catch (err) {
-    console.error('🔥 sendReminderPing failed:', err)
-    res.status(500).json({ error: err.message || 'Internal server error' })
+    res.status(500).json({ error: 'Internal server error' })
   }
 }
