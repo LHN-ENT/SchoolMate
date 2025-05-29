@@ -2,6 +2,13 @@ console.log('✅ firebaseAdmin.ts LOADED')
 
 import * as admin from 'firebase-admin'
 
+console.log('✅ firebaseAdmin.ts STARTED')
+console.log('🔍 ENV CHECK:', {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKeyStartsWith: process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30)
+})
+
 const privateKey = process.env.FIREBASE_PRIVATE_KEY
   ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
   : undefined
