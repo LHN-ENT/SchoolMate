@@ -4,7 +4,7 @@ console.log('🔥 FILE LOADED: sendReminderPing.ts')
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Readable } from 'stream'
 import { getDocs, collection, doc, getDoc } from 'firebase-admin/firestore'
-import { db } from '../../lib/admin'
+import { dbAdmin as db } from '../../lib/firebaseAdmin'
 
 export const config = {
   api: {
