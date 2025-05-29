@@ -76,9 +76,36 @@ export default function OnboardingForm() {
       }
     ])
 
-  const handleSubmit = async e => {
+    const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+
+    if (!session || !session.user?.email) {
+      console.error('❌ No valid session or user email')
+      setLoading(false)
+      return
+    }
+
+    const userEmail = session.user.email
+    const payload = {
+      children,
+      transport,
+      dailyDigest,
+      createdAt: new Date().toISOString()
+    }
+
+    try {
+      console.log('📤 Writing onboarding data for:', userEmail)
+      await setDoc(doc(db, 'users', userEmail), payload)
+      console.log('✅ Firestore write successful')
+      router.push('/dashboard')
+    } catch (err) {
+      console.error('🔥 Firestore write failed:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
 
     try {
       const childProfile = {
