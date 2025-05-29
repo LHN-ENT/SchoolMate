@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import { signIn, useSession } from 'next-auth/react'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../lib/firebaseClient'
 
 export default function OnboardingForm() {
+  const router = useRouter()
   const { data: session } = useSession()
+  const [loading, setLoading] = useState(false)
+
   const [children, setChildren] = useState([
     {
       name: '',
@@ -74,20 +78,29 @@ export default function OnboardingForm() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    const childProfile = {
-      children,
-      transport,
-      dailyDigest
+    setLoading(true)
+
+    try {
+      const childProfile = {
+        children,
+        transport,
+        dailyDigest
+      }
+
+      localStorage.setItem('childProfile', JSON.stringify(childProfile))
+
+      if (session?.user?.email) {
+        const ref = doc(db, 'users', session.user.email, 'childProfile', 'info')
+        await setDoc(ref, childProfile, { merge: true })
+      }
+
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('❌ Onboarding error:', error)
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
     }
-
-    localStorage.setItem('childProfile', JSON.stringify(childProfile))
-
-    if (session?.user?.email) {
-      const ref = doc(db, 'users', session.user.email, 'childProfile', 'info')
-      await setDoc(ref, childProfile, { merge: true })
-    }
-
-    alert('Profile saved!')
   }
 
   return (
@@ -242,9 +255,10 @@ export default function OnboardingForm() {
 
       <button
         type="submit"
-        className="w-full py-2 bg-blue-600 text-white rounded"
+        className="w-full py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        disabled={loading}
       >
-        Continue
+        {loading ? 'Saving...' : 'Continue'}
       </button>
     </form>
   )
