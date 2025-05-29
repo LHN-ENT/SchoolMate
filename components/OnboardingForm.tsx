@@ -76,58 +76,27 @@ export default function OnboardingForm() {
       }
     ])
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
-    if (!session || !session.user?.email) {
-      console.error('❌ No valid session or user email')
-      setLoading(false)
-      return
-    }
-
-    const userEmail = session.user.email
-    const payload = {
-      children,
-      transport,
-      dailyDigest,
-      createdAt: new Date().toISOString()
-    }
-
     try {
-      console.log('📤 Writing onboarding data for:', userEmail)
-      await setDoc(doc(db, 'users', userEmail), payload)
-      console.log('✅ Firestore write successful')
-      router.push('/dashboard')
-    } catch (err) {
-      console.error('🔥 Firestore write failed:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-
-    try {
-      const childProfile = {
-        children,
-        transport,
-        dailyDigest
-      }
-
-      console.log('👉 Submitting profile:', childProfile)
-      localStorage.setItem('childProfile', JSON.stringify(childProfile))
-
       if (!session?.user?.email) {
         console.warn('⚠ No session email found:', session)
         throw new Error('No session email')
       }
 
-      const ref = doc(db, 'users', session.user.email, 'childProfile', 'info')
-      console.log('📌 Firebase ref path:', ref.path)
+      const userEmail = session.user.email
+      const payload = {
+        children,
+        transport,
+        dailyDigest,
+        createdAt: new Date().toISOString()
+      }
 
-      await setDoc(ref, childProfile, { merge: true })
-
-      console.log('✅ Firebase setDoc success')
+      console.log('📤 Writing onboarding data for:', userEmail)
+      await setDoc(doc(db, 'users', userEmail), payload)
+      console.log('✅ Firestore write successful')
       router.push('/dashboard')
     } catch (error) {
       console.error('❌ Onboarding error:', error)
