@@ -1,6 +1,11 @@
-// 🔥 FILE: pages/api/parseEmailReminder.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { dbAdmin as db } from '../../lib/firebaseAdmin'
+
+export const config = {
+  api: {
+    bodyParser: true
+  }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
