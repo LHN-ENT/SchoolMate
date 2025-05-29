@@ -1,41 +1,73 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '@/lib/firestore';
+// 🔥 FILE: /pages/api/parseEmailReminder.ts
+import { google } from 'googleapis'
+import { NextApiRequest, NextApiResponse } from 'next'
+import { dbAdmin as db } from '../../lib/firebaseAdmin'
+import { getSession } from 'next-auth/react'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  const { subject, body, childId } = req.body;
-
-  if (!subject || !body || !childId) {
-    return res.status(400).json({ message: 'Missing required fields' });
-  }
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    // Attempt to extract a title and date from the body
-    const lowerBody = body.toLowerCase();
+    // 🔐 Auth: get session token from user
+    const session = await getSession({ req })
+    if (!session?.accessToken) {
+      return res.status(401).json({ error: 'Not authenticated' })
+    }
 
-    // Simple heuristic: look for known formats
-    const dateMatch = body.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/) || body.match(/\b(\d{1,2} [A-Za-z]+ \d{4})\b/);
-    const date = dateMatch ? dateMatch[0] : null;
+    // 🧠 Init Gmail API with token
+    const auth = new google.auth.OAuth2()
+    auth.setCredentials({ access_token: session.accessToken })
+    const gmail = google.gmail({ version: 'v1', auth })
 
-    const reminderTitle = subject || 'Untitled Reminder';
+    // 📨 Fetch recent emails from inbox (past 24h)
+    const { data } = await gmail.users.messages.list({
+      userId: 'me',
+      q: 'newer_than:1d',
+      maxResults: 10,
+    })
 
-    const newReminder = {
-      childId,
-      title: reminderTitle,
-      details: body,
-      parsed: true,
-      source: 'email',
-      createdAt: new Date().toISOString(),
-      date, // Optional: extracted from body
-    };
+    if (!data.messages || data.messages.length === 0) {
+      return res.status(200).json({ status: 'No new emails' })
+    }
 
-    await db.collection('reminders').add(newReminder);
-    return res.status(200).json({ message: 'Parsed and saved', reminder: newReminder });
-  } catch (error) {
-    console.error('Error saving reminder:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    const batch = db.batch()
+
+    for (const msg of data.messages) {
+      const full = await gmail.users.messages.get({
+        userId: 'me',
+        id: msg.id || '',
+        format: 'full',
+      })
+
+      const payload = full.data.payload
+      const headers = payload?.headers || []
+      const subject = headers.find(h => h.name === 'Subject')?.value || 'No subject'
+      const from = headers.find(h => h.name === 'From')?.value || 'Unknown'
+      const snippet = full.data.snippet || ''
+      const date = new Date(parseInt(full.data.internalDate || '0'))
+
+      // 🧠 Simple match on child name
+      let childId = 'unknown'
+      if (/reilly/i.test(subject + snippet)) childId = 'reilly123'
+      if (/flynn/i.test(subject + snippet)) childId = 'flynn123'
+
+      const reminder = {
+        subject,
+        body: snippet,
+        date: date.toISOString().split('T')[0],
+        from,
+        childId,
+      }
+
+      const ref = db.collection('reminders').doc()
+      batch.set(ref, reminder)
+    }
+
+    await batch.commit()
+
+    res.status(200).json({ status: 'Emails parsed and saved' })
+  } catch (err) {
+    console.error('❌ Error parsing Gmail:', err)
+    res.status(500).json({ error: 'Failed to parse Gmail' })
   }
 }
