@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../lib/firebaseClient'
 import Sidebar from '../../components/Sidebar'
@@ -12,15 +13,8 @@ type Reminder = {
   source: string
 }
 
-type ChildProfile = {
-  children: {
-    name: string
-    year: string
-    teacher: string
-  }[]
-}
-
 export default function Dashboard() {
+  const router = useRouter()
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
   const [childId, setChildId] = useState<string | null>(null)
@@ -31,19 +25,28 @@ export default function Dashboard() {
     const stored = localStorage.getItem('childProfile')
     const storedParent = localStorage.getItem('parentProfile')
 
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      if (parsed.children && parsed.children[0]) {
-        setChildName(parsed.children[0].name || '')
-        setChildId('reilly123') // TODO: Replace with real child ID logic
-      }
+    if (!stored || !storedParent) {
+      router.replace('/onboarding')
+      return
     }
 
-    if (storedParent) {
-      const parsed = JSON.parse(storedParent)
-      setParentId(parsed.parentId || null)
+    try {
+      const parsedChild = JSON.parse(stored)
+      const parsedParent = JSON.parse(storedParent)
+
+      if (!parsedChild.children || parsedChild.children.length === 0) {
+        router.replace('/onboarding')
+        return
+      }
+
+      setChildName(parsedChild.children[0].name || '')
+      setChildId('reilly123') // ← Replace with real logic later
+      setParentId(parsedParent.parentId || null)
+    } catch (err) {
+      console.error('Failed to parse localStorage profile:', err)
+      router.replace('/onboarding')
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     const fetchReminders = async () => {
@@ -60,7 +63,6 @@ export default function Dashboard() {
           id: doc.id,
           ...doc.data()
         })) as Reminder[]
-
         setReminders(data)
       } catch (error) {
         console.error('Error fetching reminders:', error)
