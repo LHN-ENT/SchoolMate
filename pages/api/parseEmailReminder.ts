@@ -1,20 +1,21 @@
 import { google } from 'googleapis'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { dbAdmin as db } from '../../lib/firebaseAdmin'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from './auth/[...nextauth]'
+import { getToken } from 'next-auth/jwt'
+
+const secret = process.env.NEXTAUTH_SECRET
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const session = await getServerSession(req, res, authOptions)
-    if (!session?.accessToken) {
+    const token = await getToken({ req, secret })
+    if (!token?.accessToken) {
       return res.status(401).json({ error: 'Not authenticated' })
     }
 
     const auth = new google.auth.OAuth2()
-    auth.setCredentials({ access_token: session.accessToken })
+    auth.setCredentials({ access_token: token.accessToken })
     const gmail = google.gmail({ version: 'v1', auth })
 
     const { data } = await gmail.users.messages.list({
