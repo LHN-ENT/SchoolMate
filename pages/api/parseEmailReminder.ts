@@ -1,25 +1,22 @@
-// 🔥 FILE: /pages/api/parseEmailReminder.ts
 import { google } from 'googleapis'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { dbAdmin as db } from '../../lib/firebaseAdmin'
-import { getToken } from 'next-auth/jwt'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from './auth/[...nextauth]'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    // 🔐 Get token from NextAuth (works in API routes)
-    const token = await getToken({ req })
-    if (!token?.accessToken) {
+    const session = await getServerSession(req, res, authOptions)
+    if (!session?.accessToken) {
       return res.status(401).json({ error: 'Not authenticated' })
     }
 
-    // 🧠 Init Gmail API with token
     const auth = new google.auth.OAuth2()
-    auth.setCredentials({ access_token: token.accessToken })
+    auth.setCredentials({ access_token: session.accessToken })
     const gmail = google.gmail({ version: 'v1', auth })
 
-    // 📥 Fetch recent emails from inbox (past 24h)
     const { data } = await gmail.users.messages.list({
       userId: 'me',
       q: 'newer_than:1d',
@@ -46,7 +43,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const snippet = full.data.snippet || ''
       const date = new Date(parseInt(full.data.internalDate || '0'))
 
-      // 👶 Simple match on child name
       let childId = 'unknown'
       if (/reilly/i.test(subject + snippet)) childId = 'reilly123'
       if (/flynn/i.test(subject + snippet)) childId = 'flynn123'
