@@ -1,7 +1,6 @@
 // 🔥 FILE: pages/api/sendBoostedReminders.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { db } from '../../lib/firebaseAdmin'
-import { getDoc, doc } from 'firebase-admin/firestore'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -16,21 +15,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (const userDoc of usersSnapshot.docs) {
       const parentId = userDoc.id
 
-      const prefsRef = doc(db, 'users', parentId, 'preferences', 'settings')
-      const prefsSnap = await getDoc(prefsRef)
-      const prefs = prefsSnap.exists() ? prefsSnap.data() : {}
+      const prefsSnap = await db.doc(`users/${parentId}/preferences/settings`).get()
+      const prefs = prefsSnap.exists ? prefsSnap.data() : {}
 
       if (!prefs.boostedReminders) continue
 
-      const profileRef = doc(db, 'users', parentId, 'childProfile', 'info')
-      const profileSnap = await getDoc(profileRef)
-      const profile = profileSnap.exists() ? profileSnap.data() : {}
+      const profileSnap = await db.doc(`users/${parentId}/childProfile/info`).get()
+      const profile = profileSnap.exists ? profileSnap.data() : {}
 
       if (!profile.children || !Array.isArray(profile.children)) continue
 
       for (const child of profile.children) {
         const childId = child.id || `${parentId}_${child.name?.toLowerCase() || 'child'}`
-
         const tasks: string[] = []
 
         if (child.peDays?.includes(today)) {
