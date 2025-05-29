@@ -1,7 +1,7 @@
 // 🔥 FILE: pages/api/sendBoostedReminders.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { db } from '../../lib/firebaseAdmin'
-import { getDocs, doc, getDoc, collection } from 'firebase-admin/firestore'
+import { getDoc, doc } from 'firebase-admin/firestore'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
   try {
-    const usersSnapshot = await getDocs(collection(db, 'users'))
+    const usersSnapshot = await db.collection('users').get()
 
     for (const userDoc of usersSnapshot.docs) {
       const parentId = userDoc.id
