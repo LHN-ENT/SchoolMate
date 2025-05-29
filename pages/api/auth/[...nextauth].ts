@@ -16,8 +16,11 @@ export default NextAuth({
       if (account) {
         token.accessToken = account.access_token
       }
-      console.log('🔐 JWT token:', token)
       return token
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken
+      return session
     },
   },
 })
