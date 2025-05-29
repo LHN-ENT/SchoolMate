@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { collection, query, where, getDocs } from 'firebase-admin/firestore'
-import { dbAdmin as db } from '../../lib/firebaseAdmin'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../../lib/firebaseClient'
 import Sidebar from '../../components/Sidebar'
 
 type Reminder = {
@@ -22,10 +22,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchReminders = async () => {
       try {
-        const snapshot = await db.collection('reminders')
-          .where('parentId', '==', parentId)
-          .get()
-
+        const q = query(collection(db, 'reminders'), where('parentId', '==', parentId))
+        const snapshot = await getDocs(q)
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
