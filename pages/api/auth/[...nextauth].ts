@@ -10,16 +10,29 @@ export default NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: 'jwt' },
-  pages: { signIn: '/auth/signin' },
+  pages: {
+    signIn: '/auth/signin',
+  },
   callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
+    async jwt({ token, user, account }) {
+      if (account && user) {
+        token.id = user.id
+        token.email = user.email
+        token.name = user.name
+        token.picture = user.image
         token.accessToken = account.access_token
       }
       return token
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken
+      if (token) {
+        session.user = {
+          name: token.name,
+          email: token.email,
+          image: token.picture
+        }
+        session.accessToken = token.accessToken
+      }
       return session
     },
   },
