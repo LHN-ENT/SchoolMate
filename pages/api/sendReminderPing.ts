@@ -47,10 +47,9 @@ if (req.method === 'OPTIONS') {
 
   const { subject, body: messageBody, date, childId } = payload
 
-  try {
-    if (!db?.app?.name) {
-      throw new Error('❌ Firebase DB not initialized. Check env vars in Vercel.')
-    }
+  if (!db) {
+  throw new Error('❌ Firestore instance not available. DB init failed.')
+}
 
     if (subject && messageBody && childId) {
       await db.collection('reminders').add({
