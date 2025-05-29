@@ -1,6 +1,6 @@
 // 🔥 FILE: pages/api/sendBoostedReminders.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { db } from '../../lib/firebaseAdmin'
+import { dbAdmin as db } from '../../lib/firebaseAdmin'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
