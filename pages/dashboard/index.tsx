@@ -1,30 +1,70 @@
-import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useEffect } from 'react'
-import { db } from '../lib/firebaseClient'
-import { doc, getDoc } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../../lib/firebaseClient'
+import Sidebar from '../../components/Sidebar'
 
-export default function Home() {
+type Reminder = {
+  id: string
+  subject: string
+  body: string
+  date: string
+  childId: string
+  source: string
+}
+
+export default function Dashboard() {
   const { data: session, status } = useSession()
-  const router = useRouter()
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkOnboarding = async () => {
-      if (status !== 'authenticated') return
+    const fetchReminders = async () => {
+      if (status !== 'authenticated' || !session?.user?.email) return
 
-      const email = session?.user?.email
-      const docRef = doc(db, 'users', email || '', 'childProfile', 'info')
-      const snap = await getDoc(docRef)
+      try {
+        const q = query(collection(db, 'reminders'), where('parentId', '==', session.user.email))
+        const snapshot = await getDocs(q)
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Reminder[]
 
-      if (!snap.exists()) {
-        router.replace('/onboarding')
-      } else {
-        router.replace('/dashboard')
+        setReminders(data)
+      } catch (error) {
+        console.error('Error fetching reminders:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
-    checkOnboarding()
+    fetchReminders()
   }, [session, status])
 
-  return <p className="p-6">Loading...</p>
+  return (
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 p-6">
+        <h1 className="text-2xl font-bold mb-4">Reminders</h1>
+
+        {loading ? (
+          <p>Loading...</p>
+        ) : reminders.length === 0 ? (
+          <p>No reminders found.</p>
+        ) : (
+          <ul className="space-y-4">
+            {reminders.map(reminder => (
+              <li key={reminder.id} className="border p-4 rounded shadow">
+                <div className="font-semibold">{reminder.subject}</div>
+                <div className="text-sm text-gray-600">{reminder.body}</div>
+                <div className="text-xs text-gray-400 mt-1">
+                  {reminder.date} · {reminder.childId} · {reminder.source}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
 }
