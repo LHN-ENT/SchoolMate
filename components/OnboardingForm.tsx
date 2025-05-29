@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { signIn, useSession } from 'next-auth/react'
 import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../lib/firestore'
+import { db } from '../lib/firebaseClient'
 
 export default function OnboardingForm() {
   const { data: session } = useSession()
