@@ -10,7 +10,7 @@ export default NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: 'jwt' },
-  pages: { signIn: '/onboarding' },
+  pages: { signIn: '/auth/signin' },
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
