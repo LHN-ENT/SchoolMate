@@ -1,3 +1,5 @@
+console.log('✅ firebaseAdmin.ts LOADED')
+
 import * as admin from 'firebase-admin'
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY
