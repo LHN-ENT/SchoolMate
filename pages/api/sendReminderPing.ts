@@ -3,8 +3,8 @@ console.log('🔥 FILE LOADED: sendReminderPing.ts')
 
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Readable } from 'stream'
-import { getDocs, collection, doc, getDoc } from 'firebase-admin/firestore'
 import * as admin from 'firebase-admin'
+import { getDocs, collection, doc, getDoc } from 'firebase-admin/firestore'
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY
   ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
@@ -47,12 +47,14 @@ function getRawBody(req: NextApiRequest): Promise<Buffer> {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🔥 HANDLER ENTERED: sendReminderPing')
-if (req.method === 'OPTIONS') {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  return res.status(200).end()
-}
+
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    return res.status(200).end()
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -71,9 +73,10 @@ if (req.method === 'OPTIONS') {
   const { subject, body: messageBody, date, childId } = payload
 
   if (!db) {
-  throw new Error('❌ Firestore instance not available. DB init failed.')
-}
+    throw new Error('❌ Firestore instance not available. DB init failed.')
+  }
 
+  try {
     if (subject && messageBody && childId) {
       await db.collection('reminders').add({
         subject,
