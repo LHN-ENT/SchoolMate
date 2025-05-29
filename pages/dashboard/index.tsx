@@ -12,25 +12,49 @@ type Reminder = {
   source: string
 }
 
+type ChildProfile = {
+  children: {
+    name: string
+    year: string
+    teacher: string
+  }[]
+}
+
 export default function Dashboard() {
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
+  const [childId, setChildId] = useState<string | null>(null)
   const [parentId, setParentId] = useState<string | null>(null)
+  const [childName, setChildName] = useState<string>('')
 
   useEffect(() => {
-    const stored = localStorage.getItem('parentProfile')
+    const stored = localStorage.getItem('childProfile')
+    const storedParent = localStorage.getItem('parentProfile')
+
     if (stored) {
       const parsed = JSON.parse(stored)
+      if (parsed.children && parsed.children[0]) {
+        setChildName(parsed.children[0].name || '')
+        setChildId('reilly123') // TODO: Replace with real child ID logic
+      }
+    }
+
+    if (storedParent) {
+      const parsed = JSON.parse(storedParent)
       setParentId(parsed.parentId || null)
     }
   }, [])
 
   useEffect(() => {
     const fetchReminders = async () => {
-      if (!parentId) return
+      if (!parentId || !childId) return
 
       try {
-        const q = query(collection(db, 'reminders'), where('parentId', '==', parentId))
+        const q = query(
+          collection(db, 'reminders'),
+          where('parentId', '==', parentId),
+          where('childId', '==', childId)
+        )
         const snapshot = await getDocs(q)
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -46,13 +70,13 @@ export default function Dashboard() {
     }
 
     fetchReminders()
-  }, [parentId])
+  }, [parentId, childId])
 
   return (
     <div className="flex">
       <Sidebar />
       <div className="flex-1 p-6">
-        <h1 className="text-2xl font-bold mb-4">Reminders</h1>
+        <h1 className="text-2xl font-bold mb-4">Reminders for {childName || 'your child'}</h1>
 
         {loading ? (
           <p>Loading...</p>
