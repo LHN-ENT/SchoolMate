@@ -10,7 +10,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const today = new Date().toLocaleDateString('en-SG', { weekday: 'long' })
-  const lines = [`📅 Hi ${child.name}'s Parent! Here's what’s on today (${today}):`, '']
+  const lines = [`📅 Hi ${(child.name ?? 'your child')}'s Parent! Here's what’s on today (${today}):`, '']
 
   if (child.schedule?.[today]?.includes('PE')) {
     lines.push('🟢 PE — Pack sports uniform')
