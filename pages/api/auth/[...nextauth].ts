@@ -4,8 +4,8 @@ import GoogleProvider from 'next-auth/providers/google'
 export default NextAuth({
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
@@ -26,9 +26,9 @@ export default NextAuth({
     },
     async session({ session, token }) {
       session.user = {
-        name: token.name || '',
-        email: token.email || '',
-        image: token.picture || ''
+        nname: token.name ?? '',
+email: token.email ?? '',
+image: token.picture ?? ''
       }
       return session
     },
