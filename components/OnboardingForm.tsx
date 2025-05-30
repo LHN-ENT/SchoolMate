@@ -27,7 +27,7 @@ export default function OnboardingForm() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
- const [children, setChildren] = useState<ChildProfile[]>([
+  const [children, setChildren] = useState<ChildProfile[]>([
     {
       name: '',
       year: '',
@@ -105,7 +105,7 @@ export default function OnboardingForm() {
       <label className="block mb-2">Child’s Name</label>
       <input
         className="border p-2 w-full mb-4"
-        value={children[0].name}
+        value={children?.[0]?.name ?? ''}
         onChange={e => updateChildField(0, 'name', e.target.value)}
       />
 
