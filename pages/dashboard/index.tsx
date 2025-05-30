@@ -1,40 +1,42 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../lib/firebaseClient'
 import Dashboard from '../../components/Dashboard'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [child, setChild] = useState<any>(null)
-  const [ready, setReady] = useState(false)
+  const { data: session, status } = useSession()
+  const [child, setChild] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('childProfile')
-    if (stored) {
-      setChild(JSON.parse(stored))
+    const loadProfile = async () => {
+      if (status !== 'authenticated') return
+
+      const uid = session.user.email
+      const userRef = doc(db, 'users', uid)
+      const userSnap = await getDoc(userRef)
+
+      const userData = userSnap.exists() ? userSnap.data() : null
+      const firstChild = userData?.children?.[0] || null
+
+      if (!firstChild) {
+        router.push('/onboarding')
+      } else {
+        setChild(firstChild)
+      }
+
+      setLoading(false)
     }
-    setReady(true)
-  }, [])
 
-  if (!ready) return null
+    loadProfile()
+  }, [status, session, router])
 
-  if (!child) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 text-center">
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h1 className="text-xl font-semibold mb-4">Setup Incomplete</h1>
-          <p className="text-gray-600 mb-6">
-            We couldn’t find a saved child profile. Let’s complete your setup.
-          </p>
-          <button
-            onClick={() => router.push('/onboarding')}
-            className="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 transition"
-          >
-            Finish Setup
-          </button>
-        </div>
-      </div>
-    )
-  }
+  if (status === 'loading' || loading) return null
 
-  return <Dashboard />
+  if (!child) return null
+
+  return <Dashboard child={child} />
 }
