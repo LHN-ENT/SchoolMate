@@ -11,5 +11,5 @@ export async function parseEmailContent(prompt: string): Promise<string> {
     temperature: 0.2
   })
 
-  return res.choices[0].message.content?.trim() || ''
+  return res.choices[0].message.content?.trim() ?? ''
 }
