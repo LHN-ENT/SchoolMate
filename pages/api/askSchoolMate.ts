@@ -31,7 +31,7 @@ Child details:
       temperature: 0.7
     })
 
-    const answer = chat.choices[0]?.message?.content || 'No response generated.'
+    const answer = chat.choices[0]?.message?.content ?? 'No response generated.'
     res.status(200).json({ answer })
   } catch (err) {
     console.error(err)
