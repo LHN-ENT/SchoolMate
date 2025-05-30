@@ -1,44 +1,31 @@
+import { useEffect } from 'react'
+import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
-import { db } from '../lib/firebaseClient'
-import { doc, getDoc } from 'firebase/firestore'
 
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkAndRedirect = async () => {
-      if (status === 'loading') return
-      if (status !== 'authenticated' || !session?.user?.email) {
-        console.warn('⚠️ No valid session — sending to sign in')
-        router.replace('/auth/signin')
-        return
-      }
-
-      try {
-        const docRef = doc(db, 'users', session.user.email, 'childProfile', 'info')
-        const snap = await getDoc(docRef)
-
-        if (snap.exists()) {
-          console.log('✅ Found child profile — to dashboard')
-          router.replace('/dashboard')
-        } else {
-          console.log('🔁 No child — to onboarding')
-          router.replace('/onboarding')
-        }
-      } catch (err) {
-        console.error('❌ Firestore error:', err)
-        router.replace('/onboarding') // fallback
-      } finally {
-        setLoading(false)
-      }
+    if (status === 'authenticated') {
+      router.push('/dashboard')
     }
+  }, [status, router])
 
-    checkAndRedirect()
-  }, [status, session, router])
+  if (status === 'loading') return null
 
-  return <p className="p-6">{loading ? 'Loading...' : 'Redirecting...'}</p>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-4 text-center">Welcome to SchoolMate</h1>
+        <p className="mb-6 text-center">Log in with Google to get started</p>
+        <button
+          onClick={() => signIn('google')}
+          className="bg-[#004225] text-white w-full py-2 rounded"
+        >
+          Sign in with Google
+        </button>
+      </div>
+    </div>
+  )
 }
