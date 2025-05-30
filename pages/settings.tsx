@@ -56,7 +56,7 @@ export default function SettingsPage() {
             <span className="text-[#1C1C1C]">Boosted Reminder Ping (7am)</span>
             <input
               type="checkbox"
-              checked={prefs.boostedReminders}
+              checked={prefs.boostedReminders ?? true}
               onChange={() =>
                 setPrefs({ ...prefs, boostedReminders: !prefs.boostedReminders })
               }
@@ -68,7 +68,7 @@ export default function SettingsPage() {
             <span className="text-[#1C1C1C]">Tap-to-Confirm Reminders</span>
             <input
               type="checkbox"
-              checked={prefs.tapToConfirm}
+              checked={prefs.tapToConfirm ?? true}
               onChange={() =>
                 setPrefs({ ...prefs, tapToConfirm: !prefs.tapToConfirm })
               }
