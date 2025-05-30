@@ -1,8 +1,12 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { db } from '../../lib/firebaseClient'
 
 export default function Step2() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [apps, setApps] = useState<string[]>([])
 
   const handleToggle = (app: string) => {
@@ -11,9 +15,21 @@ export default function Step2() {
     )
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    localStorage.setItem('connectedApps', JSON.stringify(apps))
+
+    if (!session?.user?.email) {
+      alert('User not authenticated')
+      return
+    }
+
+    const uid = session.user.email
+    const userRef = doc(db, 'users', uid)
+    const userSnap = await getDoc(userRef)
+    const existingData = userSnap.exists() ? userSnap.data() : {}
+
+    await setDoc(userRef, { ...existingData, connectedApps: apps }, { merge: true })
+
     router.push('/onboarding/step3')
   }
 
