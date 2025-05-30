@@ -42,7 +42,7 @@ export default function CalendarPage() {
                         {child.name} ({child.year}) — {child.teacher}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {child.startTime || '--:--'}–{child.endTime || '--:--'}
+                        {child.startTime ?? '--:--'}–{child.endTime ?? '--:--'}
                       </p>
                       <ul className="mt-1 space-y-1 text-sm text-gray-700">
                         {activities.length > 0 ? (
