@@ -22,7 +22,7 @@ export default function ReminderCard({ reminder, onConfirm }: ReminderCardProps)
     const stored = localStorage.getItem('userPreferences')
     if (stored) {
       const prefs = JSON.parse(stored)
-      setTapToConfirm(prefs.tapToConfirm !== false)
+      setTapToConfirm(prefs.tapToConfirm ?? true)
     }
   }, [])
 
