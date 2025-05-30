@@ -1,13 +1,30 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { db } from '../../lib/firebaseClient'
 
 export default function Step1() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [child, setChild] = useState({ name: '', year: '', class: '', color: '#004225' })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    localStorage.setItem('childProfile', JSON.stringify(child))
+
+    if (!session?.user?.email) {
+      alert('User not authenticated')
+      return
+    }
+
+    const uid = session.user.email // or session.user.id if you're using custom ID
+    const userRef = doc(db, 'users', uid)
+    const userSnap = await getDoc(userRef)
+    const existingData = userSnap.exists() ? userSnap.data() : {}
+
+    const updatedChildren = [...(existingData.children || []), child]
+
+    await setDoc(userRef, { ...existingData, children: updatedChildren }, { merge: true })
     router.push('/onboarding/step2')
   }
 
