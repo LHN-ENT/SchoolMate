@@ -32,8 +32,10 @@ export default function SettingsPage() {
   }
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/' })
-  }
+  localStorage.removeItem('childProfile')
+  localStorage.removeItem('userPreferences')
+  await signOut({ callbackUrl: '/' })
+}
 
   const handleDeleteAccount = async () => {
     localStorage.removeItem('userPreferences')
