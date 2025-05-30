@@ -23,17 +23,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    await db.collection('reminders').add({
+    const reminderRef = db
+      .collection('reminders')
+      .doc(parentId)
+      .collection(childId)
+      .doc()
+
+    await reminderRef.set({
       subject,
       body: body || '',
       from: from || '',
-      date,
-      parentId,
-      childId,
+      date: new Date(date).toISOString(),
       createdAt: new Date().toISOString()
     })
 
-    console.log('✅ Reminder saved successfully')
+    console.log('✅ Reminder saved successfully to nested path')
     return res.status(200).json({ message: 'Reminder saved' })
   } catch (error) {
     console.error('🔥 parseEmailReminder failed:', error)
