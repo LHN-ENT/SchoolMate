@@ -31,7 +31,7 @@ function getTasksForChild(child: any, today: string): string[] {
 }
 
 async function createRemindersForChild(parentId: string, child: any, today: string) {
-  const childId = child.id || `${parentId}_${child.name?.toLowerCase() || 'child'}`
+  const childId = child.id ?? `${parentId}_${(child.name ?? 'child').toLowerCase()}`
   const tasks = getTasksForChild(child, today)
   const date = new Date().toISOString().split('T')[0]
   const createdAt = new Date().toISOString()
