@@ -116,7 +116,12 @@ export default function Dashboard({ hideSetup }) {
             <h2 className="text-lg font-semibold text-[#1C1C1C]">Reminders</h2>
             <ul className="space-y-2">
               {reminders.length > 0 ? (
-                reminders.map((r, i) => <ReminderCard key={i} text={r.title || r.subject} />)
+                reminders.map((r, i) => (
+  <li key={i}>
+    <ReminderCard text={r?.title || r?.subject || 'Untitled reminder'} />
+  </li>
+))
+
               ) : (
                 <li className="text-sm text-gray-500">No reminders today.</li>
               )}
