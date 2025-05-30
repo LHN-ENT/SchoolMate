@@ -75,7 +75,7 @@ export default function Dashboard() {
     <>
       <Sidebar />
       <div className="p-4">
-        <h1 className="text-xl font-bold mb-4">Reminders for {child?.name || 'your child'}</h1>
+        <h1 className="text-xl font-bold mb-4">Reminders for {child?.name ?? 'your child'}</h1>
         {reminders.map(r => (
           <ReminderCard key={r.id} reminder={r} onConfirm={handleConfirm} />
         ))}
