@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import ReminderCard from './ReminderCard'
 import Sidebar from './Sidebar'
 import { collection, getDocs } from 'firebase/firestore'
@@ -14,7 +15,8 @@ interface Reminder {
 }
 
 export default function Dashboard() {
-  const [child, setChild] = useState<{ name: string } | null>(null)
+  const { data: session } = useSession()
+  const [child, setChild] = useState<any>(null)
   const [prefs, setPrefs] = useState({
     dailyDigest: false,
     weeklyDigest: false,
@@ -35,22 +37,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchReminders = async () => {
-      const snapshot = await getDocs(collection(db, 'reminders'))
-      const data = snapshot.docs.map(doc => {
-        const d = doc.data()
-        return {
-          id: doc.id,
-          subject: d.subject || '',
-          body: d.body || '',
-          date: d.date || '',
-          createdAt: d.createdAt || '',
-          childId: d.childId || ''
-        }
-      })
+      if (!session?.user?.email || !child?.id) return
+      const parentId = session.user.email
+      const childId = child.id
+
+      const path = `reminders/${parentId}/${childId}`
+      const snapshot = await getDocs(collection(db, path))
+
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Reminder[]
+
       setReminders(data)
     }
+
     fetchReminders()
-  }, [])
+  }, [session, child])
 
   const handleConfirm = (id: string) => {
     setReminders(prev => prev.filter(r => r.id !== id))
@@ -73,11 +76,9 @@ export default function Dashboard() {
       <Sidebar />
       <div className="p-4">
         <h1 className="text-xl font-bold mb-4">Reminders for {child?.name || 'your child'}</h1>
-        {reminders
-          .filter(r => r.childId === (child?.name?.toLowerCase() || ''))
-          .map(r => (
-            <ReminderCard key={r.id} reminder={r} onConfirm={handleConfirm} />
-          ))}
+        {reminders.map(r => (
+          <ReminderCard key={r.id} reminder={r} onConfirm={handleConfirm} />
+        ))}
 
         <div className="mt-6">
           <h2 className="font-semibold mb-2">Ask SchoolMate</h2>
