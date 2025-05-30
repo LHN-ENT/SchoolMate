@@ -1,3 +1,22 @@
+interface ChildProfile {
+  name: string
+  year: string
+  teacher: string
+  startTime: string
+  endTime: string
+  aftercare: boolean
+  peDays: string[]
+  libraryDays: string[]
+  houseSportDays: string[]
+  activities: {
+    Monday: string
+    Tuesday: string
+    Wednesday: string
+    Thursday: string
+    Friday: string
+  }
+}
+
 import { useState } from 'react'
 import { signIn, useSession } from 'next-auth/react'
 import { doc, setDoc } from 'firebase/firestore'
@@ -8,7 +27,7 @@ export default function OnboardingForm() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  const [children, setChildren] = useState([
+ const [children, setChildren] = useState<ChildProfile[]>([
     {
       name: '',
       year: '',
