@@ -1,8 +1,12 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { db } from '../../lib/firebaseClient'
 
 export default function Step3() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [prefs, setPrefs] = useState({
     dailyDigest: true,
     weeklyDigest: false,
@@ -14,9 +18,20 @@ export default function Step3() {
     setPrefs(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    localStorage.setItem('userPreferences', JSON.stringify(prefs))
+
+    if (!session?.user?.email) {
+      alert('User not authenticated')
+      return
+    }
+
+    const uid = session.user.email
+    const userRef = doc(db, 'users', uid)
+    const userSnap = await getDoc(userRef)
+    const existingData = userSnap.exists() ? userSnap.data() : {}
+
+    await setDoc(userRef, { ...existingData, userPreferences: prefs }, { merge: true })
     router.push('/dashboard')
   }
 
