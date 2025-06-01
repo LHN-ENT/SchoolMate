@@ -1,24 +1,26 @@
+import Layout from '@/components/Layout'
+
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#ECECEC] px-4 py-12">
-      <div className="bg-white p-8 rounded-2xl shadow-md max-w-3xl w-full space-y-6 text-gray-800">
-        <h1 className="text-3xl font-bold text-[#004225]">Privacy Policy</h1>
-        <p>
-          SchoolMate was built with your family’s privacy in mind. We do not sell, share, or use your data for advertising. Your information is stored securely and used only to deliver features like reminders, digests, and child-specific scheduling tools.
+    <Layout>
+      <div className="max-w-2xl mx-auto py-10 px-4 space-y-4">
+        <h1 className="text-2xl font-bold text-[#004225]">Privacy Policy</h1>
+        <p className="text-gray-700 text-sm">
+          SchoolMate does not collect, sell, or share your data — ever.
         </p>
-        <p>
-          All data remains under your control. You can delete your account and all associated data at any time. No third parties have access to your information — including schools, advertisers, or analytics platforms.
+        <p className="text-gray-700 text-sm">
+          All reminders, profiles, and preferences are stored securely using Firebase and linked
+          only to your private Google login. Your child’s data is never used for advertising or
+          analytics.
         </p>
-        <p>
-          Emails are parsed only with your permission, and no content is stored beyond what is needed to display upcoming tasks and reminders.
+        <p className="text-gray-700 text-sm">
+          This app exists solely to help you manage school life. No tracking, no spam, no hidden
+          data scraping.
         </p>
-        <p>
-          If you have any questions about privacy, contact us directly through the app’s support channel.
-        </p>
-        <p className="text-sm text-gray-500 mt-6">
-          Last updated: June 1, 2025
+        <p className="text-gray-700 text-sm">
+          You can delete your account and data at any time via the app’s settings.
         </p>
       </div>
-    </div>
+    </Layout>
   )
 }
