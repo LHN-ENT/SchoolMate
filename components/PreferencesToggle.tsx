@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 
 export function PreferencesToggle() {
   const [prefs, setPrefs] = useState({
-    tapToConfirm: true
+    tapToConfirm: true,
+    dailyDigest: true,
+    weeklyDigest: false
   })
 
   useEffect(() => {
@@ -10,22 +12,24 @@ export function PreferencesToggle() {
     if (stored) setPrefs(JSON.parse(stored))
   }, [])
 
-  const handleToggle = () => {
-    const updated = { ...prefs, tapToConfirm: !prefs.tapToConfirm }
+  const handleChange = (key: string) => {
+    const updated = { ...prefs, [key]: !prefs[key] }
     setPrefs(updated)
     localStorage.setItem('userPreferences', JSON.stringify(updated))
   }
 
   return (
-    <div className="flex items-center text-sm text-slate-600 gap-2">
-      <label className="flex items-center gap-1 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={prefs.tapToConfirm}
-          onChange={handleToggle}
-        />
-        Tap to Confirm
-      </label>
+    <div className="text-sm text-slate-600 space-y-2">
+      {Object.keys(prefs).map((key) => (
+        <label key={key} className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={prefs[key]}
+            onChange={() => handleChange(key)}
+          />
+          {key.replace(/([A-Z])/g, ' $1')}
+        </label>
+      ))}
     </div>
   )
 }
