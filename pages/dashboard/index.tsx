@@ -1,8 +1,8 @@
 // 🔔 FILE: pages/dashboard/index.tsx
 
 import { useEffect, useState } from 'react'
-import Layout from '../../components/Layout'
-import ReminderCard from '../../components/ReminderCard'
+import Layout from '@/components/Layout'
+import ReminderCard from '@/components/ReminderCard'
 import AskSchoolMate from '@/components/AskSchoolMate'
 import { onMessageListener } from '@/lib/firebaseMessaging'
 
