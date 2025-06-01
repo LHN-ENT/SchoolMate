@@ -1,3 +1,4 @@
+import '@/styles/globals.css' // <-- This is essential
 import Head from 'next/head'
 import { SessionProvider } from 'next-auth/react'
 import ErrorBoundary from '@/components/ErrorBoundary'
