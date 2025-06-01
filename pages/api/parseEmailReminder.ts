@@ -1,4 +1,3 @@
-// 📬 FILE: pages/api/parseEmailReminder.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { dbAdmin as db } from '../../lib/firebaseAdmin'
 
@@ -14,31 +13,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { subject, body, from, date, parentId, childId } = req.body
+  console.log('📩 Incoming reminder:', req.body)
 
-  console.log('📩 Incoming parsed email:', req.body)
-
-  if (!subject || !date || !childId) {
+  if (!subject || !date || !parentId || !childId) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
-  const reminderData = {
-    subject: subject || 'Email reminder',
-    description: body || '',
-    from: from || 'unknown',
-    date,
-    childId,
-    parentId: parentId || 'fallback-parent',
-    type: 'email',
-    source: 'gmail',
-    createdAt: new Date().toISOString(),
-  }
-
   try {
-    await db.collection('reminders').add(reminderData)
-    console.log('✅ Reminder saved from email:', reminderData)
-    return res.status(200).json({ message: 'Reminder saved', data: reminderData })
-  } catch (error) {
-    console.error('❌ Error saving email reminder:', error)
-    return res.status(500).json({ error: 'Failed to save reminder' })
+    const ref = db.collection('users').doc(parentId).collection('reminders')
+    await ref.add({
+      subject,
+      body,
+      from,
+      date,
+      childId,
+      origin: 'email',
+      confirmed: false,
+      createdAt: new Date().toISOString(),
+    })
+
+    res.status(200).json({ success: true })
+  } catch (err) {
+    console.error('❌ Firestore write error:', err)
+    res.status(500).json({ error: 'Failed to write reminder' })
   }
 }
