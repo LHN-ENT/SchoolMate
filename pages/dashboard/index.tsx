@@ -5,6 +5,7 @@ import { AskSchoolMate } from '@/components/AskSchoolMate'
 import { useSession } from 'next-auth/react'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebaseClient'
+import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 
 export default function Dashboard() {
   const { data: session } = useSession()
@@ -31,6 +32,8 @@ export default function Dashboard() {
       </header>
 
       <main className="p-6 space-y-6 max-w-4xl mx-auto">
+        <PushNotificationPrompt />
+
         <section>
           <h2 className="text-xl font-bold text-[#004225]">Today’s Reminders</h2>
           {loading ? (
