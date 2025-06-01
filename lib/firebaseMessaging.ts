@@ -1,20 +1,27 @@
-// 🔔 FILE: lib/firebaseMessaging.ts
+// 🚑 FILE: lib/firebaseMessaging.ts
+
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 import { initializeApp } from 'firebase/app'
 
-const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_AUTH_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_STORAGE_BUCKET',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+let messaging: ReturnType<typeof getMessaging> | null = null
+
+if (typeof window !== 'undefined') {
+  const firebaseConfig = {
+    apiKey: 'YOUR_API_KEY',
+    authDomain: 'YOUR_AUTH_DOMAIN',
+    projectId: 'YOUR_PROJECT_ID',
+    storageBucket: 'YOUR_STORAGE_BUCKET',
+    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+    appId: 'YOUR_APP_ID',
+  }
+
+  const app = initializeApp(firebaseConfig)
+  messaging = getMessaging(app)
 }
 
-const app = initializeApp(firebaseConfig)
-const messaging = getMessaging(app)
-
 export const requestNotificationPermission = async () => {
+  if (!messaging) return null
+
   try {
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
@@ -36,6 +43,7 @@ export const requestNotificationPermission = async () => {
 
 export const onMessageListener = () =>
   new Promise((resolve) => {
+    if (!messaging) return
     onMessage(messaging, (payload) => {
       console.log('📩 Foreground message:', payload)
       resolve(payload)
