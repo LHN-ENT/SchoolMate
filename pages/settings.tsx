@@ -52,4 +52,45 @@ export default function SettingsPage() {
 
       <div className="bg-white p-4 rounded-xl shadow space-y-4 max-w-md">
         <div>
-          <label clas
+          <label className="block mb-1 font-medium text-sm">Timezone</label>
+          <select
+            value={timezone}
+            onChange={handleTimezoneChange}
+            className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+          >
+            {timezones.map((tz) => (
+              <option key={tz.value} value={tz.value}>{tz.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <button
+            onClick={() => setConfirmingDelete(true)}
+            className="text-sm text-red-600 underline"
+          >
+            Delete Account
+          </button>
+        </div>
+
+        {confirmingDelete && (
+          <div className="border border-red-300 bg-red-50 p-3 rounded">
+            <p className="text-sm text-red-700 mb-2">Are you sure? This can’t be undone.</p>
+            <button
+              onClick={handleDeleteAccount}
+              className="bg-red-600 text-white px-3 py-1 text-sm rounded mr-2"
+            >
+              Yes, delete
+            </button>
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              className="text-sm text-slate-600 underline"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    </div> // ✅ ✅ ✅ This closing div was previously missing
+  )
+}
