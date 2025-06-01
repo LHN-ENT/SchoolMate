@@ -10,37 +10,29 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const childProfile = localStorage.getItem('childProfile')
+    if (!childProfile) {
+      router.push('/onboarding/step1')
+      return
+    }
+
     const checkProfile = async () => {
       if (status === 'authenticated' && session?.user?.email) {
-        const uid = session.user.email // or session.user.id if custom ID
-        const userRef = doc(db, 'users', uid)
-        const userSnap = await getDoc(userRef)
-
-        const userData = userSnap.data()
-        const hasChildren = userData?.children?.length > 0
-
-        router.push(hasChildren ? '/dashboard' : '/onboarding/step1')
+        const docRef = doc(db, 'users', session.user.email)
+        const docSnap = await getDoc(docRef)
+        if (!docSnap.exists()) {
+          router.push('/onboarding/step1')
+        } else {
+          router.push('/dashboard')
+        }
       }
     }
 
-    if (status === 'authenticated') checkProfile()
-    else if (status === 'unauthenticated') setLoading(false)
-  }, [status, session, router])
+    checkProfile().finally(() => setLoading(false))
+  }, [session, status, router])
 
-  if (status === 'loading' || loading) return null
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">Welcome to SchoolMate</h1>
-        <p className="mb-6 text-center">Log in with Google to get started</p>
-        <button
-          onClick={() => signIn('google')}
-          className="bg-[#004225] text-white w-full py-2 rounded"
-        >
-          Sign in with Google
-        </button>
-      </div>
-    </div>
-  )
+  if (loading) return <p className="text-center mt-10">Loading...</p>
+  return null
 }
