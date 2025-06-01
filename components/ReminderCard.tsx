@@ -22,17 +22,21 @@ export default function ReminderCard({ reminder, prefs }) {
   if (confirmed) return null
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow space-y-2 border border-gray-200">
-      <h2 className="text-lg font-medium text-[#004225]">{reminder.subject}</h2>
-      <p className="text-sm text-gray-700">{reminder.body}</p>
-      <p className="text-xs text-gray-500">{reminder.date}</p>
+    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow space-y-2">
+      <div className="flex justify-between items-start">
+        <h2 className="text-lg font-semibold text-[#004225]">{reminder.subject}</h2>
+        <span className="text-xs text-gray-500">{reminder.date}</span>
+      </div>
+      <p className="text-sm text-gray-700 whitespace-pre-line">{reminder.body}</p>
       {prefs.tapToConfirm && (
-        <button
-          onClick={handleConfirm}
-          className="mt-2 text-sm px-3 py-1 bg-[#004225] text-white rounded shadow"
-        >
-          Confirm
-        </button>
+        <div className="pt-2">
+          <button
+            onClick={handleConfirm}
+            className="text-sm px-4 py-1.5 bg-[#004225] hover:bg-[#00331a] text-white rounded shadow transition-all"
+          >
+            Confirm
+          </button>
+        </div>
       )}
     </div>
   )
