@@ -3,24 +3,28 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 import { app } from '@/lib/firebaseClient'
 
 export default function PushNotificationPrompt() {
-  const [permission, setPermission] = useState(Notification?.permission)
+  const [permission, setPermission] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return
 
+    setPermission(Notification.permission)
+
     const messaging = getMessaging(app)
 
     getToken(messaging, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
-    }).then((currentToken) => {
-      if (currentToken) {
-        setToken(currentToken)
-      }
-    }).catch((err) => {
-      console.error('Failed to get FCM token:', err)
     })
+      .then((currentToken) => {
+        if (currentToken) {
+          setToken(currentToken)
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to get FCM token:', err)
+      })
 
     onMessage(messaging, (payload) => {
       setMessage(payload?.notification?.title || 'New notification received')
@@ -28,6 +32,7 @@ export default function PushNotificationPrompt() {
   }, [])
 
   const requestPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
     try {
       const result = await Notification.requestPermission()
       setPermission(result)
