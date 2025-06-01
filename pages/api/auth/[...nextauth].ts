@@ -5,7 +5,7 @@ export default NextAuth({
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
@@ -26,15 +26,15 @@ clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
     },
     async session({ session, token }) {
       session.user = {
-        nname: token.name ?? '',
-email: token.email ?? '',
-image: token.picture ?? ''
+        name: token.name ?? '',
+        email: token.email ?? '',
+        image: token.picture ?? '',
       }
       return session
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ baseUrl }) {
       return baseUrl + '/dashboard'
-    }
+    },
   },
   debug: true,
 })
