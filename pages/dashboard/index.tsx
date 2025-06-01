@@ -1,42 +1,72 @@
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '../../lib/firebaseClient'
-import Dashboard from '../../components/Dashboard'
+import ReminderCard from '../../components/ReminderCard'
+import Sidebar from '../../components/Sidebar'
 
-export default function DashboardPage() {
-  const router = useRouter()
-  const { data: session, status } = useSession()
+export default function Dashboard() {
   const [child, setChild] = useState(null)
+  const [prefs, setPrefs] = useState({
+    dailyDigest: false,
+    weeklyDigest: false,
+    tapToConfirm: true,
+    assignToBoth: true
+  })
+  const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const loadProfile = async () => {
-      if (status !== 'authenticated') return
+    const storedChild = localStorage.getItem('childProfile')
+    const storedPrefs = localStorage.getItem('userPreferences')
 
-      const uid = session.user.email
-      const userRef = doc(db, 'users', uid)
-      const userSnap = await getDoc(userRef)
-
-      const userData = userSnap.exists() ? userSnap.data() : null
-      const firstChild = userData?.children?.[0] || null
-
-      if (!firstChild) {
-        router.push('/onboarding')
-      } else {
-        setChild(firstChild)
-      }
-
-      setLoading(false)
+    if (!storedChild) {
+      window.location.href = '/onboarding/step1'
+      return
     }
 
-    loadProfile()
-  }, [status, session, router])
+    setChild(JSON.parse(storedChild))
 
-  if (status === 'loading' || loading) return null
+    if (storedPrefs) {
+      setPrefs(JSON.parse(storedPrefs))
+    }
 
-  if (!child) return null
+    const fetchReminders = async () => {
+      try {
+        const res = await fetch('/api/getReminders')
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setReminders(data)
+        } else {
+          setReminders([])
+        }
+      } catch (err) {
+        console.error('Failed to load reminders:', err)
+        setReminders([])
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  return <Dashboard child={child} />
+    fetchReminders()
+  }, [])
+
+  return (
+    <div className="min-h-screen bg-[#ECECEC] flex">
+      <Sidebar />
+      <main className="flex-1 p-6 space-y-4">
+        {child && (
+          <h1 className="text-2xl font-semibold text-[#004225]">
+            Welcome, {child.name}
+          </h1>
+        )}
+        {loading ? (
+          <p className="text-gray-500">Loading reminders...</p>
+        ) : reminders.length > 0 ? (
+          reminders.map((reminder, i) => (
+            <ReminderCard key={i} reminder={reminder} prefs={prefs} />
+          ))
+        ) : (
+          <p className="text-gray-500">No reminders found.</p>
+        )}
+      </main>
+    </div>
+  )
 }
