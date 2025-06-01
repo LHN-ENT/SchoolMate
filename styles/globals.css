@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  @apply bg-[#ECECEC] text-gray-800 font-sans;
+  font-family: 'Inter', sans-serif;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+select,
+textarea {
+  @apply border border-gray-300 rounded px-3 py-2 w-full;
+}
+
+button {
+  @apply px-4 py-2 rounded bg-[#004225] text-white shadow;
+}
+
+label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+h1,
+h2 {
+  @apply font-semibold text-[#004225];
+}
