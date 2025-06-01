@@ -31,66 +31,74 @@ export default function SettingsPage() {
     loadSettings()
   }, [userEmail])
 
-  const handleTimezoneChange = async (e) => {
-    const newTZ = e.target.value
-    setTimezone(newTZ)
+  const handleSave = async () => {
     if (!userEmail) return
-    await setDoc(doc(db, 'parentSettings', userEmail), { timezone: newTZ }, { merge: true })
+    await setDoc(doc(db, 'parentSettings', userEmail), { timezone }, { merge: true })
   }
 
-  const handleDeleteAccount = async () => {
+  const handleDelete = async () => {
     if (!userEmail) return
     await deleteDoc(doc(db, 'parentSettings', userEmail))
-    await deleteDoc(doc(db, 'children', userEmail))
     await signOut()
-    router.push('/')
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] text-[#1A1A1A] p-6 font-sans">
-      <h1 className="text-2xl font-bold text-[#004225] mb-6">⚙️ Settings</h1>
+    <div className="min-h-screen bg-[#ECECEC] p-6 space-y-4">
+      <h1 className="text-2xl font-bold text-[#004225]">Settings</h1>
 
-      <div className="bg-white p-4 rounded-xl shadow space-y-4 max-w-md">
-        <div>
-          <label className="block mb-1 font-medium text-sm">Timezone</label>
-          <select
-            value={timezone}
-            onChange={handleTimezoneChange}
-            className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
-          >
-            {timezones.map((tz) => (
-              <option key={tz.value} value={tz.value}>{tz.label}</option>
-            ))}
-          </select>
-        </div>
+      <label className="block text-slate-700">
+        Timezone:
+        <select
+          value={timezone}
+          onChange={(e) => setTimezone(e.target.value)}
+          className="block mt-1 border border-slate-300 rounded px-3 py-2"
+        >
+          {timezones.map((tz) => (
+            <option key={tz.value} value={tz.value}>
+              {tz.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
-        <div>
+      <button
+        onClick={handleSave}
+        className="bg-[#004225] text-white px-4 py-2 rounded"
+      >
+        Save Settings
+      </button>
+
+      <hr />
+
+      <button
+        onClick={() => setConfirmingDelete(true)}
+        className="text-red-600 underline"
+      >
+        Delete Account
+      </button>
+
+      {confirmingDelete && (
+        <div className="space-y-2 text-sm text-slate-700">
+          <p>Are you sure? This will remove your data permanently.</p>
           <button
-            onClick={() => setConfirmingDelete(true)}
-            className="text-sm text-red-600 underline"
+            onClick={handleDelete}
+            className="bg-red-600 text-white px-4 py-2 rounded"
           >
-            Delete Account
+            Yes, delete
           </button>
         </div>
+      )}
 
-        {confirmingDelete && (
-          <div className="border border-red-300 bg-red-50 p-3 rounded">
-            <p className="text-sm text-red-700 mb-2">Are you sure? This can’t be undone.</p>
-            <button
-              onClick={handleDeleteAccount}
-              className="bg-red-600 text-white px-3 py-1 text-sm rounded mr-2"
-            >
-              Yes, delete
-            </button>
-            <button
-              onClick={() => setConfirmingDelete(false)}
-              className="text-sm text-slate-600 underline"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </div>
-    </div> // ✅ ✅ ✅ This closing div was previously missing
+      <button
+        onClick={() => {
+          localStorage.clear()
+          signOut()
+          router.push('/auth/signin')
+        }}
+        className="text-slate-600 underline mt-4"
+      >
+        Log out
+      </button>
+    </div>
   )
 }
