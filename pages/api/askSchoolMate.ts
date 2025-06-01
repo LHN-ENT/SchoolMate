@@ -1,8 +1,9 @@
-// 💬 FILE: pages/api/askSchoolMate.ts
+// 🛡️ FILE: pages/api/askSchoolMate.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { OpenAI } from 'openai'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -30,10 +31,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ],
     })
 
-    const answer = completion.choices[0]?.message?.content || ''
+    const answer = completion.choices?.[0]?.message?.content?.trim()
+    if (!answer) throw new Error('Empty AI response')
+
     return res.status(200).json({ answer })
   } catch (error) {
     console.error('❌ askSchoolMate error:', error)
-    return res.status(500).json({ error: 'AI failed to respond' })
+    return res.status(500).json({ error: 'SchoolMate AI failed to respond. Please try again later.' })
   }
 }
