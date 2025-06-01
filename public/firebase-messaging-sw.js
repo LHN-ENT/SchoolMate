@@ -1,27 +1,27 @@
-/* eslint-disable no-undef */
-/* global importScripts, firebase */
+// 🔔 FILE: public/firebase-messaging-sw.js
 
-importScripts('https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.10.0/firebase-messaging-compat.js');
+/* eslint-disable no-undef */
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js')
 
 firebase.initializeApp({
-  apiKey: "AIzaSyDNczkrum3lvYZqxwg2lX4FeKT4tTaCF7I",
-  authDomain: "schoolmate-caebf.firebaseapp.com",
-  projectId: "schoolmate-caebf",
-  storageBucket: "schoolmate-caebf.firebasestorage.app",
-  messagingSenderId: "1000399188424",
-  appId: "1:1000399188424:web:54ecb32632a45e2dd210fd"
-});
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_APP_ID'
+})
 
-const messaging = firebase.messaging();
+const messaging = firebase.messaging()
 
-messaging.onBackgroundMessage(function (payload) {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/schoolmate-icon.png' // optional icon path
-  };
+messaging.onBackgroundMessage((payload) => {
+  console.log('🔔 Received background message: ', payload)
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
+  const { title, body } = payload.notification
+
+  self.registration.showNotification(title, {
+    body,
+    icon: '/logo192.png',
+  })
+})
