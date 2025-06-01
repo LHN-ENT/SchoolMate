@@ -16,15 +16,17 @@ export default function DashboardPage() {
   const [children, setChildren] = useState([])
 
   useEffect(() => {
-    const stored = localStorage.getItem('childProfile')
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      setChildren([parsed])
-      setChildId(parsed.id || parsed.name?.toLowerCase() || '')
-    } else {
-      router.push('/onboarding')
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('childProfile')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setChildren([parsed])
+        setChildId(parsed.id || parsed.name?.toLowerCase() || '')
+      } else {
+        router.push('/onboarding')
+      }
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!childId) return
