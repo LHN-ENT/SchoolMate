@@ -1,83 +1,55 @@
-// 🔔 FILE: pages/dashboard/index.tsx
-
 import { useEffect, useState } from 'react'
-import Layout from '@/components/Layout'
-import ReminderCard from '@/components/ReminderCard'
-import AskSchoolMate from '@/components/AskSchoolMate'
-import { onMessageListener } from '@/lib/firebaseMessaging'
+import { ReminderCard } from '@/components/ReminderCard'
+import { PreferencesToggle } from '@/components/PreferencesToggle'
+import { AskSchoolMate } from '@/components/AskSchoolMate'
+import { useSession } from 'next-auth/react'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { db } from '@/lib/firebaseClient'
 
 export default function Dashboard() {
-  const [child, setChild] = useState(null)
-  const [prefs, setPrefs] = useState({
-    dailyDigest: false,
-    weeklyDigest: false,
-    tapToConfirm: true,
-    assignToBoth: true
-  })
+  const { data: session } = useSession()
   const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedChild = localStorage.getItem('childProfile')
-    const storedPrefs = localStorage.getItem('userPreferences')
-
-    if (!storedChild) {
-      window.location.href = '/onboarding/step1'
-      return
-    }
-
-    setChild(JSON.parse(storedChild))
-
-    if (storedPrefs) {
-      setPrefs(JSON.parse(storedPrefs))
-    }
-
     const fetchReminders = async () => {
-      try {
-        const res = await fetch('/api/getReminders')
-        const data = await res.json()
-        if (Array.isArray(data)) {
-          setReminders(data)
-        } else {
-          setReminders([])
-        }
-      } catch (err) {
-        console.error('Failed to load reminders:', err)
-        setReminders([])
-      } finally {
-        setLoading(false)
-      }
+      if (!session?.user?.email) return
+      const q = query(collection(db, 'reminders'), where('parentId', '==', session.user.email))
+      const snapshot = await getDocs(q)
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      setReminders(data)
+      setLoading(false)
     }
-
     fetchReminders()
-
-    onMessageListener().then((payload: any) => {
-      alert(`📣 New Reminder: ${payload?.notification?.title}`)
-    })
-  }, [])
+  }, [session])
 
   return (
-    <Layout>
-      {child && (
-        <h1 className="text-2xl font-semibold text-[#004225]">
-          Welcome, {child.name}
-        </h1>
-      )}
-      {loading ? (
-        <p className="text-gray-500">Loading reminders...</p>
-      ) : reminders.length > 0 ? (
-        <>
-          {reminders.map((reminder, i) => (
-            <ReminderCard key={i} reminder={reminder} prefs={prefs} />
-          ))}
-          {child?.id && <AskSchoolMate childId={child.id} />}
-        </>
-      ) : (
-        <div className="text-center text-gray-500 py-12">
-          <p className="text-lg">🎉 You're all caught up!</p>
-          <p className="text-sm mt-2">No pending school reminders.</p>
-        </div>
-      )}
-    </Layout>
+    <div className="min-h-screen bg-[#F5F5F5] text-[#1A1A1A] font-sans">
+      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-[#004225]">📚 SchoolMate</h1>
+        <PreferencesToggle />
+      </header>
+
+      <main className="p-6 space-y-6 max-w-4xl mx-auto">
+        <section>
+          <h2 className="text-xl font-bold text-[#004225]">Today’s Reminders</h2>
+          {loading ? (
+            <p className="text-sm text-slate-600">Loading...</p>
+          ) : reminders.length === 0 ? (
+            <p className="text-sm text-slate-600">No reminders yet. Check back soon!</p>
+          ) : (
+            <div className="grid gap-4">
+              {reminders.map((r) => (
+                <ReminderCard key={r.id} reminder={r} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <AskSchoolMate />
+        </section>
+      </main>
+    </div>
   )
 }
