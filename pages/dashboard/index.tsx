@@ -1,7 +1,10 @@
+// 🔔 FILE: pages/dashboard/index.tsx
+
 import { useEffect, useState } from 'react'
 import Layout from '../../components/Layout'
 import ReminderCard from '../../components/ReminderCard'
 import AskSchoolMate from '@/components/AskSchoolMate'
+import { onMessageListener } from '@/lib/firebaseMessaging'
 
 export default function Dashboard() {
   const [child, setChild] = useState(null)
@@ -47,6 +50,10 @@ export default function Dashboard() {
     }
 
     fetchReminders()
+
+    onMessageListener().then((payload: any) => {
+      alert(`📣 New Reminder: ${payload?.notification?.title}`)
+    })
   }, [])
 
   return (
@@ -59,10 +66,12 @@ export default function Dashboard() {
       {loading ? (
         <p className="text-gray-500">Loading reminders...</p>
       ) : reminders.length > 0 ? (
-        reminders.map((reminder, i) => (
-          <ReminderCard key={i} reminder={reminder} prefs={prefs} />
-        ))
-      {child?.id && <AskSchoolMate childId={child.id} />}
+        <>
+          {reminders.map((reminder, i) => (
+            <ReminderCard key={i} reminder={reminder} prefs={prefs} />
+          ))}
+          {child?.id && <AskSchoolMate childId={child.id} />}
+        </>
       ) : (
         <div className="text-center text-gray-500 py-12">
           <p className="text-lg">🎉 You're all caught up!</p>
