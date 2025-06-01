@@ -1,19 +1,16 @@
-// 🔔 FILE: pages/_app.tsx
-
-import { useEffect } from 'react'
+import Head from 'next/head'
 import { SessionProvider } from 'next-auth/react'
-import '@/styles/globals.css'
-import type { AppProps } from 'next/app'
-import { requestNotificationPermission } from '@/lib/firebaseMessaging'
 
-export default function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
-  useEffect(() => {
-    requestNotificationPermission()
-  }, [])
-
+function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
     <SessionProvider session={session}>
+      <Head>
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="theme-color" content="#004225" />
+      </Head>
       <Component {...pageProps} />
     </SessionProvider>
   )
 }
+
+export default MyApp
