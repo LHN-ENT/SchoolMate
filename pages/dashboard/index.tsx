@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Layout from '../../components/Layout'
 import ReminderCard from '../../components/ReminderCard'
+import AskSchoolMate from '@/components/AskSchoolMate'
 
 export default function Dashboard() {
   const [child, setChild] = useState(null)
@@ -61,6 +62,7 @@ export default function Dashboard() {
         reminders.map((reminder, i) => (
           <ReminderCard key={i} reminder={reminder} prefs={prefs} />
         ))
+      {child?.id && <AskSchoolMate childId={child.id} />}
       ) : (
         <div className="text-center text-gray-500 py-12">
           <p className="text-lg">🎉 You're all caught up!</p>
