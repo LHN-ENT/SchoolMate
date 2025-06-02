@@ -1,54 +1,61 @@
 import { useEffect, useState } from 'react'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
-import { initializeApp } from 'firebase/app'
+import { db, app } from '@/lib/firebaseClient'
+import { useSession } from 'next-auth/react'
+import { doc, setDoc } from 'firebase/firestore'
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDNczkrum3lvYZqxwg2lX4FeKT4tTaCF7I",
-  authDomain: "schoolmate-caebf.firebaseapp.com",
-  projectId: "schoolmate-caebf",
-  storageBucket: "schoolmate-caebf.firebasestorage.app",
-  messagingSenderId: "1000399188424",
-  appId: "1:1000399188424:web:54ecb32632a45e2dd210fd"
-}
-
-export default function PushNotification() {
-  const [permission, setPermission] = useState(Notification.permission)
-  const [token, setToken] = useState('')
+export default function PushNotificationPrompt() {
+  const { data: session } = useSession()
+  const [permission, setPermission] = useState(Notification?.permission || 'default')
+  const [token, setToken] = useState<string | null>(null)
+  const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'error'>('idle')
 
   useEffect(() => {
-    const app = initializeApp(firebaseConfig)
-    const messaging = getMessaging(app)
+    if (typeof window === 'undefined' || !('Notification' in window)) return
 
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission().then((perm) => {
-        setPermission(perm)
-        if (perm === 'granted') {
-          getToken(messaging, {
-            vapidKey: 'BOVfHes1_AquCB1h_BP1qkcScTB_9eXFcBAlbJs17IbvMbYua1aGhaevYrdPyeAc5bgR-OdxSy7rL2dk-D_MjnQ'
-          }).then((currentToken) => {
-            if (currentToken) {
-              console.log('FCM Token:', currentToken)
-              setToken(currentToken)
-              // Optional: send to backend
-            } else {
-              console.warn('No registration token available.')
-            }
-          }).catch((err) => {
-            console.error('Token retrieval error: ', err)
+    const setupPushNotifications = async () => {
+      try {
+        const result = await Notification.requestPermission()
+        setPermission(result)
+
+        if (result === 'granted') {
+          const messaging = getMessaging(app)
+          const fcmToken = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
           })
+
+          if (fcmToken && session?.user?.email) {
+            await setDoc(
+              doc(db, 'parentSettings', session.user.email),
+              { fcmToken },
+              { merge: true }
+            )
+            setToken(fcmToken)
+            setStatus('subscribed')
+          }
+        } else {
+          setStatus('denied')
         }
-      })
+      } catch (err) {
+        console.error('Notification setup failed:', err)
+        setStatus('error')
+      }
     }
 
+    setupPushNotifications()
+
+    const messaging = getMessaging(app)
     onMessage(messaging, (payload) => {
-      console.log('Foreground message:', payload)
+      console.log('Push message received:', payload)
     })
-  }, [])
+  }, [session])
+
+  if (status === 'subscribed' || permission === 'denied') return null
 
   return (
-    <div className="text-sm text-gray-600">
-      Notifications: {permission === 'granted' ? 'Enabled' : 'Not granted'}
-      {token && <div className="mt-1 break-all">Token: {token}</div>}
+    <div className="text-sm text-gray-600 italic">
+      {status === 'idle' && 'Enabling push notifications...'}
+      {status === 'error' && 'Push notification setup failed.'}
     </div>
   )
 }
