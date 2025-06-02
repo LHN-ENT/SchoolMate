@@ -18,30 +18,36 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!session?.user?.email) return
+      try {
+        if (!session?.user?.email) return
 
-      const userRef = doc(db, 'users', session.user.email)
-      const snap = await getDoc(userRef)
+        const userRef = doc(db, 'users', session.user.email)
+        const snap = await getDoc(userRef)
 
-      const data = snap.exists() ? snap.data() : null
+        const data = snap.exists() ? snap.data() : null
 
-      if (!data?.childProfile) {
+        if (!data?.childProfile) {
+          router.replace('/onboarding/step1')
+          return
+        }
+
+        setChildProfile(data.childProfile)
+
+        const remindersRef = collection(db, 'users', session.user.email, 'reminders')
+        const snapshot = await getDocs(remindersRef)
+        const results = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          parentId: session.user.email,
+        }))
+
+        setReminders(results)
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
         router.replace('/onboarding/step1')
-        return
+      } finally {
+        setLoading(false)
       }
-
-      setChildProfile(data.childProfile)
-
-      const remindersRef = collection(db, 'users', session.user.email, 'reminders')
-      const snapshot = await getDocs(remindersRef)
-      const results = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        parentId: session.user.email,
-      }))
-
-      setReminders(results)
-      setLoading(false)
     }
 
     if (status === 'authenticated') {
@@ -50,7 +56,7 @@ export default function Dashboard() {
   }, [session, status, router])
 
   if (loading || status === 'loading') {
-    return <p className="text-center mt-10">Loading dashboard...</p>
+    return <p className="text-center mt-10 text-gray-600">Loading your dashboard...</p>
   }
 
   return (
@@ -59,7 +65,10 @@ export default function Dashboard() {
       <PushNotificationPrompt />
       <AskSchoolMate />
       {reminders.length === 0 ? (
-        <p className="text-sm text-gray-500">No reminders yet.</p>
+        <div className="text-center mt-10 text-gray-500">
+          <p className="text-base">🎉 You're all caught up!</p>
+          <p className="text-sm">No reminders pending for now. We'll keep you posted.</p>
+        </div>
       ) : (
         reminders.map((r) => <ReminderCard key={r.id} reminder={r} />)
       )}
