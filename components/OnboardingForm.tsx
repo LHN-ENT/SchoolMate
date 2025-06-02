@@ -27,7 +27,7 @@ export default function OnboardingForm() {
 
   const handleChildSubmit = async (e) => {
     e.preventDefault()
-    if (!session?.user?.email) return
+    if (!session?.user?.id) return
 
     await setDoc(doc(db, 'users', session.user.id), {
       childProfile: child,
@@ -38,9 +38,9 @@ export default function OnboardingForm() {
 
   const handlePrefsSubmit = async (e) => {
     e.preventDefault()
-    if (!session?.user?.email) return
+    if (!session?.user?.id) return
 
-    await setDocdoc(db, 'users', session.user.id), {
+    await setDoc(doc(db, 'users', session.user.id), {
       preferences: prefs,
     }, { merge: true })
 
