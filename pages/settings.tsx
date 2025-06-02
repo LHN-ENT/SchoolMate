@@ -91,7 +91,6 @@ export default function SettingsPage() {
 
       <button
         onClick={() => {
-          localStorage.clear()
           signOut()
           router.push('/auth/signin')
         }}
