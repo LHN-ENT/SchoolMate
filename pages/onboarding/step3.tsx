@@ -23,7 +23,7 @@ export default function Step3() {
 
     if (!session?.user?.email) return
 
-    const docRef = doc(db, 'parentSettings', session.user.email)
+    const docRef = doc(db, 'parentSettings', session.user.id)
     await setDoc(docRef, { ...prefs }, { merge: true })
 
     router.push('/dashboard')
