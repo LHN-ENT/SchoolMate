@@ -1,40 +1,32 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { dbAdmin as db } from '../../lib/firebaseAdmin'
-
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-}
+import { db } from '@/lib/firebaseAdmin'
+import { collection, addDoc } from 'firebase/firestore'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' })
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { subject, body, from, date, parentId, childId } = req.body
-  console.log('📩 Incoming reminder:', req.body)
+  const { parentEmail, subject, body, date } = req.body
 
-  if (!subject || !date || !parentId || !childId) {
+  if (!parentEmail || !subject || !body) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
   try {
-    const ref = db.collection('users').doc(parentId).collection('reminders')
-    await ref.add({
+    const reminder = {
       subject,
       body,
-      from,
-      date,
-      childId,
-      origin: 'email',
-      confirmed: false,
       createdAt: new Date().toISOString(),
-    })
+      ...(date && { date })
+    }
 
-    res.status(200).json({ success: true })
+    const ref = collection(db, 'users', parentEmail, 'reminders')
+    await addDoc(ref, reminder)
+
+    return res.status(200).json({ success: true })
   } catch (err) {
-    console.error('❌ Firestore write error:', err)
-    res.status(500).json({ error: 'Failed to write reminder' })
+    console.error('Reminder parse error:', err)
+    return res.status(500).json({ error: 'Failed to save reminder' })
   }
 }
