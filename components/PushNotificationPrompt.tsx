@@ -24,9 +24,9 @@ export default function PushNotificationPrompt() {
             vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
           })
 
-          if (fcmToken && session?.user?.email) {
+          if (fcmToken && session?.user?.id) {
             await setDoc(
-              doc(db, 'parentSettings', session.user.email),
+              doc(db, 'parentSettings', session.user.id),
               { fcmToken },
               { merge: true }
             )
