@@ -12,7 +12,7 @@ export default function Header() {
       if (!session?.user?.email) return
 
       try {
-        const userRef = doc(db, 'users', session.user.email)
+        const userRef = doc(db, 'users', session.user.id)
         const snap = await getDoc(userRef)
         const data = snap.exists() ? snap.data() : null
         setChildName(data?.childProfile?.name || '')
