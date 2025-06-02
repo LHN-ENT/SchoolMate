@@ -1,121 +1,121 @@
-interface ChildProfile {
-  name: string
-  year: string
-  teacher: string
-  startTime: string
-  endTime: string
-  aftercare: boolean
-  peDays: string[]
-  libraryDays: string[]
-  houseSportDays: string[]
-  activities: {
-    Monday: string
-    Tuesday: string
-    Wednesday: string
-    Thursday: string
-    Friday: string
-  }
-}
-
 import { useState } from 'react'
-import { signIn, useSession } from 'next-auth/react'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../lib/firebaseClient'
 import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebaseClient'
 
 export default function OnboardingForm() {
-  const { data: session, status } = useSession()
   const router = useRouter()
+  const { data: session } = useSession()
 
-  const [children, setChildren] = useState<ChildProfile[]>([
-    {
-      name: '',
-      year: '',
-      teacher: '',
-      startTime: '',
-      endTime: '',
-      aftercare: false,
-      peDays: [],
-      libraryDays: [],
-      houseSportDays: [],
-      activities: {
-        Monday: '',
-        Tuesday: '',
-        Wednesday: '',
-        Thursday: '',
-        Friday: ''
-      }
-    }
-  ])
-  const [transport, setTransport] = useState('bus')
-  const [dailyDigest, setDailyDigest] = useState(true)
-  const [loading, setLoading] = useState(false)
+  const [step, setStep] = useState(1)
+  const [child, setChild] = useState({
+    name: '',
+    year: '',
+    class: '',
+    color: '#004225',
+  })
 
-  const updateChildField = (index: number, field: string, value: any) => {
-    const updated = [...children]
-    updated[index][field] = value
-    setChildren(updated)
+  const [prefs, setPrefs] = useState({
+    dailyDigest: true,
+    weeklyDigest: false,
+    tapToConfirm: true,
+    assignToBoth: true,
+  })
+
+  const handleNextStep = () => setStep(step + 1)
+
+  const handleChildSubmit = async (e) => {
+    e.preventDefault()
+    if (!session?.user?.email) return
+
+    await setDoc(doc(db, 'users', session.user.email), {
+      childProfile: child,
+    }, { merge: true })
+
+    handleNextStep()
   }
 
-  const handleSubmit = async () => {
-    if (!session?.user?.email) {
-      console.error('❌ Session not ready — cannot save onboarding')
-      return
-    }
+  const handlePrefsSubmit = async (e) => {
+    e.preventDefault()
+    if (!session?.user?.email) return
 
-    const parentId = session.user.email
-    const childId = children[0].name.toLowerCase().replace(/\s+/g, '')
+    await setDoc(doc(db, 'users', session.user.email), {
+      preferences: prefs,
+    }, { merge: true })
 
-    setLoading(true)
-    try {
-      await setDoc(doc(db, 'parents', parentId), {
-        dailyDigest,
-        transport
-      })
-
-      await setDoc(doc(db, 'children', childId), {
-        ...children[0],
-        parentId
-      })
-
-      localStorage.setItem('childProfile', JSON.stringify(children[0]))
-      localStorage.setItem('userPreferences', JSON.stringify({ dailyDigest }))
-      router.push('/dashboard')
-    } catch (err) {
-      console.error('🔥 Onboarding Firestore error:', err)
-      alert('Something went wrong saving your details. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    router.push('/dashboard')
   }
 
-  if (status === 'loading') return null
-  if (!session) return (
-    <div className="p-4">
-      <p>Please sign in to continue.</p>
-      <button onClick={() => signIn('google')} className="bg-green-600 text-white px-4 py-2 rounded">
-        Sign in with Google
-      </button>
-    </div>
-  )
+  const updateChild = (field, value) => setChild({ ...child, [field]: value })
+  const togglePref = (field) => setPrefs((prev) => ({ ...prev, [field]: !prev[field] }))
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Onboarding</h2>
-      <label className="block mb-2">Child’s Name</label>
-      <input
-        className="border p-2 w-full mb-4"
-        value={children?.[0]?.name ?? ''}
-        onChange={e => updateChildField(0, 'name', e.target.value)}
-      />
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#ECECEC] px-4 py-10">
+      <div className="bg-white rounded-xl p-6 shadow max-w-md w-full space-y-6">
+        {step === 1 && (
+          <form onSubmit={handleChildSubmit} className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#004225]">Step 1: Add Your Child</h2>
+            <input
+              type="text"
+              placeholder="Child's Name"
+              value={child.name}
+              onChange={(e) => updateChild('name', e.target.value)}
+              className="input"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Year"
+              value={child.year}
+              onChange={(e) => updateChild('year', e.target.value)}
+              className="input"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Class"
+              value={child.class}
+              onChange={(e) => updateChild('class', e.target.value)}
+              className="input"
+              required
+            />
+            <input
+              type="color"
+              value={child.color}
+              onChange={(e) => updateChild('color', e.target.value)}
+              className="w-full h-10 border rounded"
+            />
+            <button type="submit" className="btn-primary">Next</button>
+          </form>
+        )}
 
-      <button
-        onClick={handleSubmit}
-        className="bg-[#004225] text-white px-4 py-2 rounded"
-        disabled={loading}
-      >
-        {loading ? 'Saving...' : 'Continue'}
-      </button>
+        {step === 2 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#004225]">Step 2: Link School Apps</h2>
+            <p className="text-sm text-gray-600">App linking coming soon — no action needed.</p>
+            <button onClick={handleNextStep} className="btn-primary">Next</button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <form onSubmit={handlePrefsSubmit} className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#004225]">Step 3: Preferences</h2>
+            {Object.keys(prefs).map((key) => (
+              <label key={key} className="block text-sm">
+                <input
+                  type="checkbox"
+                  checked={prefs[key]}
+                  onChange={() => togglePref(key)}
+                  className="mr-2"
+                />
+                {key}
+              </label>
+            ))}
+            <button type="submit" className="btn-primary">Finish</button>
+          </form>
+        )}
+      </div>
     </div>
   )
 }
