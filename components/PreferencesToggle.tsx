@@ -16,7 +16,7 @@ export function PreferencesToggle() {
     const fetchPrefs = async () => {
       if (!session?.user?.email) return
       try {
-        const ref = doc(db, 'users', session.user.email)
+        const ref = doc(db, 'users', session.user.id)
         const snap = await getDoc(ref)
         const data = snap.data()
         if (data?.preferences) {
@@ -37,7 +37,7 @@ export function PreferencesToggle() {
     setPrefs(updated)
 
     try {
-      const ref = doc(db, 'users', session.user.email)
+      const ref = doc(db, 'users', session.user.id)
       await updateDoc(ref, { preferences: updated })
     } catch (err) {
       console.error('Failed to update preference:', err)
