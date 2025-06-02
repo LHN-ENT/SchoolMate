@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSession, signIn } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebaseClient'
@@ -7,47 +7,42 @@ import { db } from '@/lib/firebaseClient'
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    const checkUserProfile = async () => {
-      if (status !== 'authenticated') return
+    const checkProfile = async () => {
+      if (status === 'loading') return
+
+      if (!session?.user?.email) {
+        router.replace('/auth/signin')
+        return
+      }
 
       try {
-        const ref = doc(db, 'users', session.user.email)
-        const snap = await getDoc(ref)
-        const data = snap.data()
+        const userRef = doc(db, 'users', session.user.email)
+        const snap = await getDoc(userRef)
 
-        if (data?.childProfile) {
-          router.push('/dashboard')
+        const data = snap.exists() ? snap.data() : null
+
+        if (!data?.childProfile) {
+          router.replace('/onboarding/step1')
         } else {
-          router.push('/onboarding/step1')
+          router.replace('/dashboard')
         }
       } catch (err) {
-        console.error('Profile check failed:', err)
-        router.push('/onboarding/step1')
+        console.error('Index redirect failed:', err)
+        router.replace('/onboarding/step1')
       } finally {
-        setLoading(false)
+        setChecking(false)
       }
     }
 
-    if (status === 'authenticated') {
-      checkUserProfile()
-    }
+    checkProfile()
   }, [session, status, router])
-
-  if (loading || status === 'loading') {
-    return <p className="text-center mt-10">Loading...</p>
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#ECECEC]">
-      <button
-        onClick={() => signIn('google')}
-        className="px-6 py-3 bg-[#004225] text-white rounded-xl shadow"
-      >
-        Sign In with Google
-      </button>
+      <p className="text-gray-600">Checking profile...</p>
     </div>
   )
 }
