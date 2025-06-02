@@ -1,19 +1,29 @@
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebaseClient'
 
 export default function Header() {
+  const { data: session } = useSession()
   const [childName, setChildName] = useState('')
 
   useEffect(() => {
-    const storedChild = localStorage.getItem('childProfile')
-    if (storedChild) {
+    const fetchChildName = async () => {
+      if (!session?.user?.email) return
+
       try {
-        const parsed = JSON.parse(storedChild)
-        setChildName(parsed.name || '')
-      } catch {
+        const userRef = doc(db, 'users', session.user.email)
+        const snap = await getDoc(userRef)
+        const data = snap.exists() ? snap.data() : null
+        setChildName(data?.childProfile?.name || '')
+      } catch (err) {
+        console.error('Failed to load child name for header:', err)
         setChildName('')
       }
     }
-  }, [])
+
+    fetchChildName()
+  }, [session])
 
   return (
     <header className="w-full px-6 py-4 bg-white shadow flex justify-between items-center border-b border-gray-200">
