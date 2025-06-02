@@ -1,8 +1,12 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebaseClient'
 
 export default function Step3() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [prefs, setPrefs] = useState({
     dailyDigest: true,
     weeklyDigest: false,
@@ -16,7 +20,12 @@ export default function Step3() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    localStorage.setItem('userPreferences', JSON.stringify(prefs))
+
+    if (!session?.user?.email) return
+
+    const docRef = doc(db, 'parentSettings', session.user.email)
+    await setDoc(docRef, { ...prefs }, { merge: true })
+
     router.push('/dashboard')
   }
 
