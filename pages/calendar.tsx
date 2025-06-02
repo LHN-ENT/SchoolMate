@@ -1,15 +1,32 @@
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebaseClient'
 import Sidebar from '@/components/Sidebar'
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
 export default function CalendarPage() {
+  const { data: session } = useSession()
   const [childProfile, setChildProfile] = useState(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('childProfile')
-    if (stored) setChildProfile(JSON.parse(stored))
-  }, [])
+    const fetchChildProfile = async () => {
+      if (!session?.user?.email) return
+
+      try {
+        const userRef = doc(db, 'users', session.user.email)
+        const snap = await getDoc(userRef)
+        const data = snap.exists() ? snap.data() : null
+        setChildProfile(data?.childProfile || null)
+      } catch (error) {
+        console.error('Failed to fetch child profile for calendar:', error)
+        setChildProfile(null)
+      }
+    }
+
+    fetchChildProfile()
+  }, [session])
 
   return (
     <div className="flex min-h-screen">
