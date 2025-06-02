@@ -21,11 +21,13 @@ export default NextAuth({
         token.email = user.email
         token.name = user.name
         token.picture = user.image
+        // token.sub is the user's unique ID from the provider
       }
       return token
     },
     async session({ session, token }) {
       session.user = {
+        id: token.sub ?? '',      // Add this line to include the user's ID in session.user
         name: token.name ?? '',
         email: token.email ?? '',
         image: token.picture ?? '',
