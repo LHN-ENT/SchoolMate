@@ -1,42 +1,85 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
-export default function ReminderForm({ onSuccess }) {
-  const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+type ReminderFormProps = {
+  onSuccess: () => void
+}
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+export default function ReminderForm({ onSuccess }: ReminderFormProps) {
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [date, setDate] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
     try {
       const res = await fetch('/api/reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) throw new Error('Failed to create reminder');
-      setText('');
-      if (onSuccess) onSuccess();
+        body: JSON.stringify({ subject, body, date }),
+      })
+      if (!res.ok) throw new Error('Failed to create reminder')
+      setSubject('')
+      setBody('')
+      setDate('')
+      onSuccess()
     } catch (err) {
-      setError('Could not create reminder.');
+      setError('Failed to create reminder')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        value={text}
-        onChange={e => setText(e.target.value)}
+    <form onSubmit={handleSubmit} className="mb-4">
+      <div>
+        <label>
+          Subject:
+          <input
+            className="border rounded px-2 py-1 ml-2"
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            required
+            disabled={loading}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Body:
+          <textarea
+            className="border rounded px-2 py-1 ml-2"
+            value={body}
+            onChange={e => setBody(e.target.value)}
+            rows={2}
+            disabled={loading}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Date:
+          <input
+            type="date"
+            className="border rounded px-2 py-1 ml-2"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            required
+            disabled={loading}
+          />
+        </label>
+      </div>
+      <button
+        type="submit"
+        className="mt-2 px-4 py-1 bg-blue-500 text-white rounded"
         disabled={loading}
-        placeholder="Enter reminder"
-      />
-      <button type="submit" disabled={loading || !text}>
-        Add Reminder
+      >
+        {loading ? 'Adding…' : 'Add Reminder'}
       </button>
-      {error && <div className="error">{error}</div>}
+      {error && <div className="text-red-600 mt-2">{error}</div>}
     </form>
-  );
+  )
 }
