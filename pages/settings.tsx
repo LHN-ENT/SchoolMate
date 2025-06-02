@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { doc, deleteDoc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebaseClient'
 import { useRouter } from 'next/router'
+import {
+  doc,
+  deleteDoc,
+  getDoc,
+  setDoc,
+  collection,
+  getDocs,
+  writeBatch
+} from 'firebase/firestore'
+import { db } from '@/lib/firebaseClient'
 
 const timezones = [
   { label: 'UTC+8 (SG)', value: 'UTC+8' },
@@ -38,8 +46,28 @@ export default function SettingsPage() {
 
   const handleDelete = async () => {
     if (!userEmail) return
-    await deleteDoc(doc(db, 'parentSettings', userEmail))
-    await signOut()
+
+    try {
+      // Delete settings
+      await deleteDoc(doc(db, 'parentSettings', userEmail))
+
+      // Delete user profile
+      await deleteDoc(doc(db, 'users', userEmail))
+
+      // Delete all reminders
+      const remindersRef = collection(db, 'users', userEmail, 'reminders')
+      const reminderDocs = await getDocs(remindersRef)
+
+      if (!reminderDocs.empty) {
+        const batch = writeBatch(db)
+        reminderDocs.forEach(doc => batch.delete(doc.ref))
+        await batch.commit()
+      }
+
+      await signOut()
+    } catch (err) {
+      console.error('Account deletion failed:', err)
+    }
   }
 
   return (
@@ -79,7 +107,7 @@ export default function SettingsPage() {
 
       {confirmingDelete && (
         <div className="space-y-2 text-sm text-slate-700">
-          <p>Are you sure? This will remove your data permanently.</p>
+          <p>Are you sure? This will remove all your data permanently.</p>
           <button
             onClick={handleDelete}
             className="bg-red-600 text-white px-4 py-2 rounded"
