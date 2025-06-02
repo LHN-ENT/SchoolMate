@@ -17,7 +17,7 @@ export default function Step1() {
       return
     }
 
-    const uid = session.user.email // or session.user.id if you're using custom ID
+    const uid = session.user.id
     const userRef = doc(db, 'users', uid)
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.exists() ? userSnap.data() : {}
