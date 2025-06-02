@@ -20,7 +20,7 @@ export default function OnboardingPage() {
       }
 
       try {
-        const userRef = doc(db, 'users', session.user.email)
+        const userRef = doc(db, 'users', session.user.id)
         const snap = await getDoc(userRef)
         const data = snap.exists() ? snap.data() : null
 
