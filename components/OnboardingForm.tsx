@@ -29,7 +29,7 @@ export default function OnboardingForm() {
     e.preventDefault()
     if (!session?.user?.email) return
 
-    await setDoc(doc(db, 'users', session.user.email), {
+    await setDoc(doc(db, 'users', session.user.id), {
       childProfile: child,
     }, { merge: true })
 
@@ -40,7 +40,7 @@ export default function OnboardingForm() {
     e.preventDefault()
     if (!session?.user?.email) return
 
-    await setDoc(doc(db, 'users', session.user.email), {
+    await setDocdoc(db, 'users', session.user.id), {
       preferences: prefs,
     }, { merge: true })
 
