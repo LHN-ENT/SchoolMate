@@ -1,24 +1,32 @@
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebaseClient'
-import { useState, useEffect } from 'react'
 
 export function ReminderCard({ reminder }) {
-  const { subject = 'No Subject', body = '', date, origin, id, confirmed } = reminder
+  const { subject = 'No Subject', body = '', date, origin, id, confirmed, parentId } = reminder
   const [tapEnabled, setTapEnabled] = useState(false)
   const [wasConfirmed, setWasConfirmed] = useState(confirmed)
 
   useEffect(() => {
-    const prefs = localStorage.getItem('userPreferences')
-    if (prefs) {
-      const parsed = JSON.parse(prefs)
-      setTapEnabled(parsed.tapToConfirm)
+    const fetchPrefs = async () => {
+      if (!parentId) return
+      try {
+        const ref = doc(db, 'users', parentId)
+        const snap = await getDoc(ref)
+        const data = snap.data()
+        setTapEnabled(data?.preferences?.tapToConfirm || false)
+      } catch (err) {
+        console.warn('Failed to load user preferences:', err)
+      }
     }
-  }, [])
+
+    fetchPrefs()
+  }, [parentId])
 
   const handleConfirm = async () => {
-    if (!wasConfirmed) {
-      const ref = doc(db, 'users', reminder.parentId, 'reminders', id)
+    if (!wasConfirmed && parentId) {
+      const ref = doc(db, 'users', parentId, 'reminders', id)
       await updateDoc(ref, { confirmed: true })
       setWasConfirmed(true)
     }
