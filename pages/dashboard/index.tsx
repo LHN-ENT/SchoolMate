@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { useRouter } from 'next/router'
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebaseClient'
 import { ReminderCard } from '@/components/ReminderCard'
 import { PreferencesToggle } from '@/components/PreferencesToggle'
@@ -11,41 +11,46 @@ import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+
+  const [childProfile, setChildProfile] = useState(null)
   const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
-      if (status !== 'authenticated' || !session?.user?.email) return
+      if (!session?.user?.email) return
 
-      try {
-        // Check if childProfile exists
-        const userRef = doc(db, 'users', session.user.email)
-        const userSnap = await getDoc(userRef)
-        const userData = userSnap.data()
+      const userRef = doc(db, 'users', session.user.email)
+      const snap = await getDoc(userRef)
 
-        if (!userData?.childProfile) {
-          router.push('/onboarding/step1')
-          return
-        }
+      const data = snap.exists() ? snap.data() : null
 
-        // Fetch reminders
-        const ref = collection(db, 'users', session.user.email, 'reminders')
-        const snapshot = await getDocs(ref)
-        const data = snapshot.docs.map((doc) => ({ id: doc.id, parentId: session.user.email, ...doc.data() }))
-        setReminders(data)
-      } catch (err) {
-        console.error('Dashboard fetch error:', err)
-      } finally {
-        setLoading(false)
+      if (!data?.childProfile) {
+        router.replace('/onboarding/step1')
+        return
       }
+
+      setChildProfile(data.childProfile)
+
+      const remindersRef = collection(db, 'users', session.user.email, 'reminders')
+      const snapshot = await getDocs(remindersRef)
+      const results = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        parentId: session.user.email,
+      }))
+
+      setReminders(results)
+      setLoading(false)
     }
 
-    fetchData()
+    if (status === 'authenticated') {
+      fetchData()
+    }
   }, [session, status, router])
 
-  if (loading) {
-    return <p className="text-center mt-10">Loading...</p>
+  if (loading || status === 'loading') {
+    return <p className="text-center mt-10">Loading dashboard...</p>
   }
 
   return (
@@ -53,16 +58,11 @@ export default function Dashboard() {
       <PreferencesToggle />
       <PushNotificationPrompt />
       <AskSchoolMate />
-      <div>
-        <h2 className="text-xl font-semibold text-[#004225]">Reminders</h2>
-        <div className="space-y-4 mt-2">
-          {reminders.length > 0 ? (
-            reminders.map((r) => <ReminderCard key={r.id} reminder={r} />)
-          ) : (
-            <p className="text-gray-600">No reminders found.</p>
-          )}
-        </div>
-      </div>
+      {reminders.length === 0 ? (
+        <p className="text-sm text-gray-500">No reminders yet.</p>
+      ) : (
+        reminders.map((r) => <ReminderCard key={r.id} reminder={r} />)
+      )}
     </div>
   )
 }
