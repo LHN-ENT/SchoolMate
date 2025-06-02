@@ -8,17 +8,28 @@ import { PreferencesToggle } from '@/components/PreferencesToggle'
 import { AskSchoolMate } from '@/components/AskSchoolMate'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 
+type Reminder = {
+  id: string
+  subject: string
+  body?: string
+  date: string
+  parentId: string
+  // Add any other fields your reminders use
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  const [childProfile, setChildProfile] = useState(null)
-  const [reminders, setReminders] = useState([])
+  const [childProfile, setChildProfile] = useState<any>(null)
+  const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setError(null)
         if (!session?.user?.email) return
 
         const userRef = doc(db, 'users', session.user.email)
@@ -35,15 +46,16 @@ export default function Dashboard() {
 
         const remindersRef = collection(db, 'users', session.user.email, 'reminders')
         const snapshot = await getDocs(remindersRef)
-        const results = snapshot.docs.map(doc => ({
+        const results: Reminder[] = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data(),
+          ...(doc.data() as Omit<Reminder, 'id'>),
           parentId: session.user.email,
         }))
 
         setReminders(results)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
+        setError('Failed to load dashboard data.')
         router.replace('/onboarding/step1')
       } finally {
         setLoading(false)
@@ -70,6 +82,11 @@ export default function Dashboard() {
       <PreferencesToggle />
       <PushNotificationPrompt />
       <AskSchoolMate />
+      {error && (
+        <div className="bg-red-100 text-red-700 px-4 py-2 rounded">
+          {error}
+        </div>
+      )}
       {reminders.length === 0 ? (
         <div className="text-center mt-10 text-gray-500">
           <p className="text-base">🎉 You're all caught up!</p>
