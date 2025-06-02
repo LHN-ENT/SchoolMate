@@ -56,7 +56,13 @@ export default function Dashboard() {
   }, [session, status, router])
 
   if (loading || status === 'loading') {
-    return <p className="text-center mt-10 text-gray-600">Loading your dashboard...</p>
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
+        <div className="text-4xl mb-2 animate-pulse">📚</div>
+        <p className="text-lg font-medium">Loading your dashboard...</p>
+        <p className="text-sm text-gray-400">This won’t take long.</p>
+      </div>
+    )
   }
 
   return (
