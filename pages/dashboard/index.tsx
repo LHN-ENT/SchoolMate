@@ -30,9 +30,9 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setError(null)
-        if (!session?.user?.email) return
+        if (!session?.user?.id) return
 
-        const userRef = doc(db, 'users', session.user.email)
+        const userRef = doc(db, 'users', session.user.id)
         const snap = await getDoc(userRef)
 
         const data = snap.exists() ? snap.data() : null
@@ -44,12 +44,12 @@ export default function Dashboard() {
 
         setChildProfile(data.childProfile)
 
-        const remindersRef = collection(db, 'users', session.user.email, 'reminders')
+        const remindersRef = collection(db, 'users', session.user.id, 'reminders')
         const snapshot = await getDocs(remindersRef)
         const results: Reminder[] = snapshot.docs.map(doc => ({
           id: doc.id,
           ...(doc.data() as Omit<Reminder, 'id'>),
-          parentId: session.user.email,
+          parentId: session.user.id,
         }))
 
         setReminders(results)
