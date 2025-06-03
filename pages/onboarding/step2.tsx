@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { addChild } from "../lib/childrenHelpers";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
@@ -20,8 +21,9 @@ export default function Step2() {
     extraDay: "",
     extraGear: "",
   });
+  const [done, setDone] = useState(false);
 
-  function updateField(field, value) {
+  function updateField(field: string, value: any) {
     setRoutine((c) => ({ ...c, [field]: value }));
   }
 
@@ -39,7 +41,7 @@ export default function Step2() {
     }));
   }
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Merge with step1 childProfile
     const child = JSON.parse(localStorage.getItem("childProfile") || "{}");
@@ -53,9 +55,32 @@ export default function Step2() {
       afterSchoolCare: routine.afterCareOn ? routine.afterSchoolCare : [],
       extracurriculars: routine.extracurriculars,
     };
-    localStorage.setItem("childProfile", JSON.stringify(child));
+    addChild(child);
+    setDone(true);
+  }
+
+  function handleAddAnother() {
+    localStorage.removeItem("childProfile");
+    router.push("/onboarding/step1");
+  }
+
+  function handleContinue() {
+    localStorage.removeItem("childProfile");
     router.push("/onboarding/step3");
   }
+
+  if (done)
+    return (
+      <div className="p-8 flex flex-col items-center">
+        <h2>Child added!</h2>
+        <button className="btn-primary m-2" onClick={handleAddAnother}>
+          Add another child
+        </button>
+        <button className="btn-primary m-2" onClick={handleContinue}>
+          Continue to preferences
+        </button>
+      </div>
+    );
 
   return (
     <form onSubmit={handleSubmit} className="max-w-lg mx-auto p-6 bg-white shadow rounded space-y-4">
@@ -165,7 +190,7 @@ export default function Step2() {
         </div>
       </div>
       <button className="btn-primary mt-4" type="submit">
-        Next
+        Save Child
       </button>
     </form>
   );
