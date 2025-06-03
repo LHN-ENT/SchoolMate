@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { addChild } from "../lib/childrenHelpers";
+import { addChild } from "../../lib/childrenHelpers";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
