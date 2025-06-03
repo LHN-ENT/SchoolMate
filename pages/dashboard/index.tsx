@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { db } from "../../lib/firebaseClient";
 import { doc, getDoc } from "firebase/firestore";
+import DashboardLayout from "../../components/DashboardLayout";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -25,107 +26,110 @@ export default function Dashboard() {
     fetchData();
   }, [session]);
 
-  if (status === "loading" || loading) return <div>Loading dashboard...</div>;
-  if (!session) return <div>Please sign in to view your dashboard.</div>;
+  if (status === "loading" || loading) return <DashboardLayout><div>Loading dashboard...</div></DashboardLayout>;
+  if (!session) return <DashboardLayout><div>Please sign in to view your dashboard.</div></DashboardLayout>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Your Dashboard</h1>
-      {children.length === 0 && (
-        <div>No children found. Please complete onboarding.</div>
-      )}
-      {children.map((child, i) => (
-        <div key={i} className="mb-6 p-4 bg-gray-100 rounded">
-          <h2 className="text-lg font-semibold mb-2">
-            {child.name} ({child.year} {child.class})
-          </h2>
-          <div>
-            Color Tag:{" "}
-            <span
-              style={{
-                display: "inline-block",
-                width: 16,
-                height: 16,
-                background: child.color,
-                borderRadius: 4,
-                marginLeft: 4,
-                verticalAlign: "middle",
-              }}
-            />
+    <DashboardLayout>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Children Cards */}
+        {children.length === 0 && (
+          <div className="col-span-2">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded shadow-sm">
+              <p className="text-lg font-semibold text-yellow-800">
+                No children found. Please complete onboarding.
+              </p>
+            </div>
           </div>
-          {child.routine && (
-            <div className="mt-2">
-              <div>
-                <b>PE Days:</b> {child.routine.peDays?.join(", ") || "None"}
-              </div>
-              <div>
-                <b>Library Day:</b> {child.routine.libraryDay || "None"}{" "}
-                {child.routine.libraryBooks && "📚"}
-              </div>
-              <div>
-                <b>Sport Day:</b> {child.routine.sportDay || "None"}{" "}
-                {child.routine.sportUniform && "🏅"}
-              </div>
-              {child.routine.cca && (
-                <div>
-                  <b>CCA:</b> {child.routine.cca.name} ({child.routine.cca.day}{" "}
-                  {child.routine.cca.time}) at {child.routine.cca.location}{" "}
-                  {child.routine.cca.pickup && "🚗"}
-                </div>
+        )}
+        {children.map((child, i) => (
+          <div key={i} className="bg-white p-6 rounded-xl shadow border border-gray-100">
+            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <span>{child.name}</span>
+              <span className="bg-blue-100 text-blue-700 text-sm px-2 py-1 rounded">{child.year} {child.class}</span>
+            </h2>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-gray-600">Color Tag:</span>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 24,
+                  height: 24,
+                  background: child.color,
+                  borderRadius: 6,
+                  border: "1px solid #ccc"
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              {child.routine && (
+                <>
+                  <div>
+                    <b>PE Days:</b> {child.routine.peDays?.join(", ") || "None"}
+                  </div>
+                  <div>
+                    <b>Library Day:</b> {child.routine.libraryDay || "None"}{" "}
+                    {child.routine.libraryBooks && "📚"}
+                  </div>
+                  <div>
+                    <b>Sport Day:</b> {child.routine.sportDay || "None"}{" "}
+                    {child.routine.sportUniform && "🏅"}
+                  </div>
+                  {child.routine.cca && child.routine.cca.name && (
+                    <div>
+                      <b>CCA:</b> {child.routine.cca.name} ({child.routine.cca.day}{" "}
+                      {child.routine.cca.time}) at {child.routine.cca.location}{" "}
+                      {child.routine.cca.pickup && "🚗"}
+                    </div>
+                  )}
+                  {child.routine.afterSchoolCare &&
+                    child.routine.afterSchoolCare.length > 0 && (
+                      <div>
+                        <b>After School Care:</b>{" "}
+                        {child.routine.afterSchoolCare.join(", ")}
+                      </div>
+                    )}
+                  {child.routine.extracurriculars &&
+                    child.routine.extracurriculars.length > 0 && (
+                      <div>
+                        <b>Extracurriculars:</b>
+                        <ul className="list-disc list-inside">
+                          {child.routine.extracurriculars.map((e: any, idx: number) => (
+                            <li key={idx}>{e}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </>
               )}
-              {child.routine.afterSchoolCare &&
-                child.routine.afterSchoolCare.length > 0 && (
-                  <div>
-                    <b>After School Care:</b>{" "}
-                    {child.routine.afterSchoolCare.join(", ")}
-                  </div>
-                )}
-              {child.routine.extracurriculars &&
-                child.routine.extracurriculars.length > 0 && (
-                  <div>
-                    <b>Extracurriculars:</b>
-                    <ul className="list-disc list-inside">
-                      {child.routine.extracurriculars.map(
-                        (act: any, idx: number) => (
-                          <li key={idx}>
-                            {act.name} ({act.day}
-                            {act.gear ? `, needs: ${act.gear}` : ""})
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                )}
             </div>
-          )}
-        </div>
-      ))}
-      {preferences && (
-        <div className="mt-8 p-4 bg-blue-50 rounded">
-          <h2 className="font-semibold mb-2">Parent Preferences</h2>
-          <div>
-            <b>Apps:</b> {(preferences.apps || []).join(", ") || "None"}
           </div>
-          <div>
-            <b>Daily Digest:</b>{" "}
-            {preferences.preferences?.dailyDigest ? "✅" : "❌"}
-          </div>
-          <div>
-            <b>Weekly Digest:</b>{" "}
-            {preferences.preferences?.weeklyDigest ? "✅" : "❌"}
-          </div>
-          <div>
-            <b>Tap-to-Confirm:</b>{" "}
-            {preferences.preferences?.tapToConfirm ? "✅" : "❌"}
-          </div>
-          {children.length > 1 && (
-            <div>
-              <b>Assign to Both:</b>{" "}
-              {preferences.preferences?.assignToBoth ? "✅" : "❌"}
+        ))}
+
+        {/* Preferences Card */}
+        {preferences && (
+          <div className="bg-white p-6 rounded-xl shadow border border-gray-100 md:col-span-2">
+            <h3 className="text-lg font-bold mb-3 text-blue-700">Parent Preferences</h3>
+            <div className="space-y-1">
+              <div>
+                <b>Apps:</b> {preferences.apps?.join(", ") || "None"}
+              </div>
+              <div>
+                <b>Daily Digest:</b>{" "}
+                {preferences.dailyDigest ? "✅" : "❌"}
+              </div>
+              <div>
+                <b>Weekly Digest:</b>{" "}
+                {preferences.weeklyDigest ? "✅" : "❌"}
+              </div>
+              <div>
+                <b>Tap-to-Confirm:</b>{" "}
+                {preferences.tapToConfirm ? "✅" : "❌"}
+              </div>
             </div>
-          )}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }
