@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { getChildren, clearChildren } from "../lib/childrenHelpers";
-import { db } from "../lib/firebaseClient"; // adjust path as needed
+import { getChildren, clearChildren } from "../../lib/childrenHelpers";
+import { db } from "../../lib/firebaseClient"; // make sure this file exists!
 import { useSession } from "next-auth/react";
 import { doc, setDoc } from "firebase/firestore";
 
