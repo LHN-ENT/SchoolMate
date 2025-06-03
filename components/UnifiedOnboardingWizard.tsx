@@ -423,7 +423,7 @@ function PreferencesForm({
   );
 }
 
-// App linking step (Gmail placeholder)
+// App linking step with Gmail Connect Button
 function AppLinkingStep({
   linkedApps,
   setLinkedApps,
@@ -433,7 +433,10 @@ function AppLinkingStep({
   setLinkedApps: (apps: string[]) => void;
   onNext: () => void;
 }) {
-  // In Phase 2, implement real Google OAuth here
+  function handleGmailConnect() {
+    alert("Gmail connect coming soon!");
+    if (!linkedApps.includes("gmail")) setLinkedApps([...linkedApps, "gmail"]);
+  }
   function toggleApp(app: string) {
     setLinkedApps(
       linkedApps.includes(app)
@@ -444,14 +447,26 @@ function AppLinkingStep({
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Link School Apps</h2>
-      <label>
-        <input
-          type="checkbox"
-          checked={linkedApps.includes("gmail")}
-          onChange={() => toggleApp("gmail")}
-        />{" "}
-        Gmail (Google)
-      </label>
+      <button
+        className="btn-primary"
+        style={{
+          background: "#4285F4",
+          color: "#fff",
+          padding: "0.75rem 1.5rem",
+          border: "none",
+          borderRadius: 4,
+          cursor: "pointer",
+          fontSize: "1rem",
+          fontWeight: 500,
+        }}
+        onClick={handleGmailConnect}
+        type="button"
+      >
+        {linkedApps.includes("gmail") ? "Gmail Connected" : "Connect Gmail"}
+      </button>
+      <div className="text-sm text-gray-500">
+        Gmail connect coming soon (Phase 2)
+      </div>
       <label>
         <input
           type="checkbox"
@@ -476,9 +491,6 @@ function AppLinkingStep({
         />{" "}
         SkoolBag
       </label>
-      <div className="text-sm text-gray-500">
-        Gmail connect coming soon (Phase 2)
-      </div>
       <button className="btn-primary mt-4" onClick={onNext}>
         Next
       </button>
@@ -688,7 +700,7 @@ export default function UnifiedOnboardingWizard() {
     );
   }
 
-  // App linking step
+  // App linking step (with Gmail button)
   if (step === 3) {
     return (
       <div className="max-w-xl mx-auto mt-10 bg-white shadow rounded p-8">
