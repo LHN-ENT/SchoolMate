@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { getChildren, clearChildren } from "../lib/childrenHelpers";
+import { db } from "../lib/firebaseClient"; // adjust path as needed
+import { useSession } from "next-auth/react";
+import { doc, setDoc } from "firebase/firestore";
 
 const COMMON_APPS = [
   { label: "Gmail (via LachieBot)", value: "gmail" },
@@ -12,14 +16,7 @@ const MAX_APPS = 5;
 
 export default function Step3() {
   const router = useRouter();
-  // Load any child profiles from localStorage (for "assign to both kids" logic)
-  const [children, setChildren] = useState(() => {
-    // Could be a single child or array
-    const one = localStorage.getItem("childProfile");
-    const many = localStorage.getItem("children");
-    return many ? JSON.parse(many) : one ? [JSON.parse(one)] : [];
-  });
-
+  const { data: session } = useSession();
   const [selectedApps, setSelectedApps] = useState<string[]>([]);
   const [otherApps, setOtherApps] = useState<string[]>([]);
   const [otherAppInput, setOtherAppInput] = useState("");
@@ -30,6 +27,9 @@ export default function Step3() {
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [tapToConfirm, setTapToConfirm] = useState(false);
   const [assignToBoth, setAssignToBoth] = useState(false);
+
+  // Children loaded from localStorage
+  const children = getChildren();
 
   // Gmail sign-in placeholder
   function handleGmailSignin() {
@@ -68,7 +68,6 @@ export default function Step3() {
     e.preventDefault();
     setSaving(true);
 
-    // Save to localStorage for now
     const parentPrefs = {
       apps: [...selectedApps, ...otherApps],
       preferences: {
@@ -78,14 +77,25 @@ export default function Step3() {
         assignToBoth: children.length > 1 ? assignToBoth : false,
       },
     };
-    localStorage.setItem("parentPreferences", JSON.stringify(parentPrefs));
 
-    // In production, save to Firestore here
-
-    setTimeout(() => {
-      setSaving(false);
-      router.push("/dashboard");
-    }, 1000);
+    // Save to Firestore
+    if (session?.user?.id) {
+      const userRef = doc(db, "users", session.user.id);
+      await setDoc(
+        userRef,
+        {
+          children: children,
+          preferences: parentPrefs,
+          // ...add other parent-level info here if needed
+        },
+        { merge: true }
+      );
+    }
+    // Clean up localStorage
+    clearChildren();
+    localStorage.removeItem("parentPreferences");
+    setSaving(false);
+    router.push("/dashboard");
   }
 
   return (
@@ -119,7 +129,12 @@ export default function Step3() {
             className="input"
             disabled={selectedApps.length + otherApps.length >= MAX_APPS}
           />
-          <button type="button" className="btn-secondary" onClick={addOtherApp} disabled={selectedApps.length + otherApps.length >= MAX_APPS}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={addOtherApp}
+            disabled={selectedApps.length + otherApps.length >= MAX_APPS}
+          >
             Add
           </button>
         </div>
