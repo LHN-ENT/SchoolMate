@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { db } from "../lib/firebaseClient";
+import { db } from "../../lib/firebaseClient";
 import { doc, getDoc } from "firebase/firestore";
 
 export default function Dashboard() {
