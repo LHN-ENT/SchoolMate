@@ -1,100 +1,131 @@
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
-import { collection, doc, getDoc, getDocs } from 'firebase/firestore'
-import { db } from '@/lib/firebaseClient'
-import { ReminderCard } from '@/components/ReminderCard'
-import { PreferencesToggle } from '@/components/PreferencesToggle'
-import { AskSchoolMate } from '@/components/AskSchoolMate'
-import PushNotificationPrompt from '@/components/PushNotificationPrompt'
-
-type Reminder = {
-  id: string
-  subject: string
-  body?: string
-  date: string
-  parentId: string
-  // Add any other fields your reminders use
-}
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { db } from "../lib/firebaseClient";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
-  const [childProfile, setChildProfile] = useState<any>(null)
-  const [reminders, setReminders] = useState<Reminder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: session, status } = useSession();
+  const [children, setChildren] = useState<any[]>([]);
+  const [preferences, setPreferences] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setError(null)
-        if (!session?.user?.id) return
-
-        const userRef = doc(db, 'users', session.user.id)
-        const snap = await getDoc(userRef)
-
-        const data = snap.exists() ? snap.data() : null
-
-        if (!data?.childProfile) {
-          router.replace('/onboarding/step1')
-          return
+    async function fetchData() {
+      if (session?.user?.id) {
+        const userRef = doc(db, "users", session.user.id);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setChildren(data.children || []);
+          setPreferences(data.preferences || null);
         }
-
-        setChildProfile(data.childProfile)
-
-        const remindersRef = collection(db, 'users', session.user.id, 'reminders')
-        const snapshot = await getDocs(remindersRef)
-        const results: Reminder[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Reminder, 'id'>),
-          parentId: session.user.id,
-        }))
-
-        setReminders(results)
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error)
-        setError('Failed to load dashboard data.')
-        router.replace('/onboarding/step1')
-      } finally {
-        setLoading(false)
       }
+      setLoading(false);
     }
+    fetchData();
+  }, [session]);
 
-    if (status === 'authenticated') {
-      fetchData()
-    }
-  }, [session, status, router])
-
-  if (loading || status === 'loading') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
-        <div className="text-4xl mb-2 animate-pulse">📚</div>
-        <p className="text-lg font-medium">Loading your dashboard...</p>
-        <p className="text-sm text-gray-400">This won’t take long.</p>
-      </div>
-    )
-  }
+  if (status === "loading" || loading) return <div>Loading dashboard...</div>;
+  if (!session) return <div>Please sign in to view your dashboard.</div>;
 
   return (
-    <div className="p-4 space-y-4">
-      <PreferencesToggle />
-      <PushNotificationPrompt />
-      <AskSchoolMate />
-      {error && (
-        <div className="bg-red-100 text-red-700 px-4 py-2 rounded">
-          {error}
-        </div>
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">Your Dashboard</h1>
+      {children.length === 0 && (
+        <div>No children found. Please complete onboarding.</div>
       )}
-      {reminders.length === 0 ? (
-        <div className="text-center mt-10 text-gray-500">
-          <p className="text-base">🎉 You're all caught up!</p>
-          <p className="text-sm">No reminders pending for now. We'll keep you posted.</p>
+      {children.map((child, i) => (
+        <div key={i} className="mb-6 p-4 bg-gray-100 rounded">
+          <h2 className="text-lg font-semibold mb-2">
+            {child.name} ({child.year} {child.class})
+          </h2>
+          <div>
+            Color Tag:{" "}
+            <span
+              style={{
+                display: "inline-block",
+                width: 16,
+                height: 16,
+                background: child.color,
+                borderRadius: 4,
+                marginLeft: 4,
+                verticalAlign: "middle",
+              }}
+            />
+          </div>
+          {child.routine && (
+            <div className="mt-2">
+              <div>
+                <b>PE Days:</b> {child.routine.peDays?.join(", ") || "None"}
+              </div>
+              <div>
+                <b>Library Day:</b> {child.routine.libraryDay || "None"}{" "}
+                {child.routine.libraryBooks && "📚"}
+              </div>
+              <div>
+                <b>Sport Day:</b> {child.routine.sportDay || "None"}{" "}
+                {child.routine.sportUniform && "🏅"}
+              </div>
+              {child.routine.cca && (
+                <div>
+                  <b>CCA:</b> {child.routine.cca.name} ({child.routine.cca.day}{" "}
+                  {child.routine.cca.time}) at {child.routine.cca.location}{" "}
+                  {child.routine.cca.pickup && "🚗"}
+                </div>
+              )}
+              {child.routine.afterSchoolCare &&
+                child.routine.afterSchoolCare.length > 0 && (
+                  <div>
+                    <b>After School Care:</b>{" "}
+                    {child.routine.afterSchoolCare.join(", ")}
+                  </div>
+                )}
+              {child.routine.extracurriculars &&
+                child.routine.extracurriculars.length > 0 && (
+                  <div>
+                    <b>Extracurriculars:</b>
+                    <ul className="list-disc list-inside">
+                      {child.routine.extracurriculars.map(
+                        (act: any, idx: number) => (
+                          <li key={idx}>
+                            {act.name} ({act.day}
+                            {act.gear ? `, needs: ${act.gear}` : ""})
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                )}
+            </div>
+          )}
         </div>
-      ) : (
-        reminders.map((r) => <ReminderCard key={r.id} reminder={r} />)
+      ))}
+      {preferences && (
+        <div className="mt-8 p-4 bg-blue-50 rounded">
+          <h2 className="font-semibold mb-2">Parent Preferences</h2>
+          <div>
+            <b>Apps:</b> {(preferences.apps || []).join(", ") || "None"}
+          </div>
+          <div>
+            <b>Daily Digest:</b>{" "}
+            {preferences.preferences?.dailyDigest ? "✅" : "❌"}
+          </div>
+          <div>
+            <b>Weekly Digest:</b>{" "}
+            {preferences.preferences?.weeklyDigest ? "✅" : "❌"}
+          </div>
+          <div>
+            <b>Tap-to-Confirm:</b>{" "}
+            {preferences.preferences?.tapToConfirm ? "✅" : "❌"}
+          </div>
+          {children.length > 1 && (
+            <div>
+              <b>Assign to Both:</b>{" "}
+              {preferences.preferences?.assignToBoth ? "✅" : "❌"}
+            </div>
+          )}
+        </div>
       )}
     </div>
-  )
+  );
 }
