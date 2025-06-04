@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebaseClient'
-import Sidebar from '@/components/Sidebar'
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
@@ -30,7 +29,6 @@ export default function CalendarPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
       <main className="flex-1 bg-[#F7F7F7] p-6 space-y-6">
         <h1 className="text-2xl font-bold text-[#004225]">Weekly Schedule</h1>
 
@@ -64,7 +62,7 @@ export default function CalendarPage() {
                       <ul className="mt-1 space-y-1 text-sm text-gray-700">
                         {activities.length > 0 ? (
                           activities.map((a, idx) => (
-                            <li key={idx} className="pl-2 before:content-['•'] before:mr-2">
+                            <li key={idx} className="pl-2 before:content-['\u2022'] before:mr-2">
                               {a}
                             </li>
                           ))
