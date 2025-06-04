@@ -25,13 +25,13 @@ export default function Home() {
         const data = snap.exists() ? snap.data() : null
 
         if (!data?.childProfile) {
-          router.replace('/onboarding/step1')
+          router.replace('/onboarding') // 🟢 FIXED: unified onboarding
         } else {
           router.replace('/dashboard')
         }
       } catch (err) {
         console.error('Index redirect failed:', err)
-        router.replace('/onboarding/step1')
+        router.replace('/onboarding') // 🟢 FIXED: unified onboarding
       } finally {
         setChecking(false)
       }
