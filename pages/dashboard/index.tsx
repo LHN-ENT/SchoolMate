@@ -63,26 +63,26 @@ export default function Dashboard() {
     return (
       <ul className="list-disc ml-6">
         {activities.map(act => (
-          routine[act]?.days?.length > 0 && (
+          Array.isArray(routine[act]?.days) && routine[act].days.length > 0 && (
             <li key={act} className="mb-1">
               <span className="font-medium capitalize">{act}:</span> {routine[act].days.join(", ")}
               {routine[act].bring && <> — <span className="italic text-gray-600">{routine[act].bring}</span></>}
             </li>
           )
         ))}
-        {routine.afterSchoolCare?.days?.length > 0 && (
+        {Array.isArray(routine.afterSchoolCare?.days) && routine.afterSchoolCare.days.length > 0 && (
           <li>
             <span className="font-medium">After School Care:</span> {routine.afterSchoolCare.days.join(", ")}
             {routine.afterSchoolCare.closingTime && <> until {routine.afterSchoolCare.closingTime}</>}
           </li>
         )}
-        {routine.extracurriculars?.length > 0 && (
+        {Array.isArray(routine.extracurriculars) && routine.extracurriculars.length > 0 && (
           <li>
             <span className="font-medium">Extracurriculars:</span>
             <ul className="ml-3">
               {routine.extracurriculars.map((ex: any, i: number) => (
                 <li key={i}>
-                  {ex.name} ({ex.days.join(", ")}) {ex.start}-{ex.finish}
+                  {ex.name} ({Array.isArray(ex.days) ? ex.days.join(", ") : ""}) {ex.start}-{ex.finish}
                 </li>
               ))}
             </ul>
