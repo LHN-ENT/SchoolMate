@@ -26,13 +26,22 @@ export default function Dashboard() {
     fetchData();
   }, [session]);
 
-  if (status === "loading" || loading) return <DashboardLayout><div>Loading dashboard...</div></DashboardLayout>;
-  if (!session) return <DashboardLayout><div>Please sign in to view your dashboard.</div></DashboardLayout>;
+  if (status === "loading" || loading)
+    return (
+      <DashboardLayout>
+        <div>Loading dashboard...</div>
+      </DashboardLayout>
+    );
+  if (!session)
+    return (
+      <DashboardLayout>
+        <div>Please sign in to view your dashboard.</div>
+      </DashboardLayout>
+    );
 
   return (
     <DashboardLayout>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Children Cards */}
         {children.length === 0 && (
           <div className="col-span-2">
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded shadow-sm">
@@ -106,7 +115,6 @@ export default function Dashboard() {
           </div>
         ))}
 
-        {/* Preferences Card */}
         {preferences && (
           <div className="bg-white p-6 rounded-xl shadow border border-gray-100 md:col-span-2">
             <h3 className="text-lg font-bold mb-3 text-blue-700">Parent Preferences</h3>
