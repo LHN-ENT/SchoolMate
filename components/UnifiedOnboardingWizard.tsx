@@ -34,332 +34,214 @@ type ParentPreferences = {
   linkedApps: string[];
 };
 
-// ----- Step Components -----
+import React, { useState } from "react";
+
+// --- Section helpers ---
+const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+function WeekdayCheckboxes({ selected, onChange }: { selected: string[], onChange: (days: string[]) => void }) {
+  function toggle(day: string) {
+    const set = new Set(selected);
+    set.has(day) ? set.delete(day) : set.add(day);
+    onChange(Array.from(set));
+  }
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {weekdays.map(d => (
+        <label key={d} className="inline-flex items-center mr-2">
+          <input type="checkbox" checked={selected.includes(d)} onChange={() => toggle(d)} />
+          {d}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 function ChildForm({
   initial,
   onSave,
   onCancel,
 }: {
-  initial?: Partial<ChildProfile>;
-  onSave: (c: ChildProfile) => void;
+  initial?: any;
+  onSave: (child: any) => void;
   onCancel?: () => void;
 }) {
-  const [child, setChild] = useState<ChildProfile>({
-    name: initial?.name || "",
-    year: initial?.year || "",
-    class: initial?.class || "",
-    color: initial?.color || "#004225",
-    routine: initial?.routine || {
-      peDays: [],
-      libraryDay: "",
-      libraryBooks: false,
-      sportDay: "",
-      sportUniform: false,
-      ccaOn: false,
-      cca: { name: "", day: "", time: "", location: "", pickup: false },
-      afterCareOn: false,
-      afterSchoolCare: [],
-      extracurriculars: [],
-    },
-  });
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  const [extra, setExtra] = useState({ name: "", day: "", gear: "" });
+  // --- Section 1: Basic Info ---
+  const [name, setName] = useState(initial?.name || "");
+  const [year, setYear] = useState(initial?.year || "");
+  const [className, setClassName] = useState(initial?.class || "");
+  const [color, setColor] = useState(initial?.color || "#004225");
 
-  function update(field: keyof ChildProfile, value: any) {
-    setChild((c) => ({ ...c, [field]: value }));
+  // --- Section 2: Routine (Activities) ---
+  // Each activity: days[], bring
+  const [routine, setRoutine] = useState(() => {
+    const base = initial?.routine || {};
+    return {
+      pe: { days: base.pe?.days || [], bring: base.pe?.bring || "" },
+      music: { days: base.music?.days || [], bring: base.music?.bring || "" },
+      library: { days: base.library?.days || [], bring: base.library?.bring || "" },
+      art: { days: base.art?.days || [], bring: base.art?.bring || "" },
+      sports: { days: base.sports?.days || [], bring: base.sports?.bring || "" },
+      afterSchoolCare: {
+        days: base.afterSchoolCare?.days || [],
+        closingTime: base.afterSchoolCare?.closingTime || "",
+      },
+      extracurriculars: base.extracurriculars || [],
+    };
+  });
+
+  // --- Section 4: Extracurriculars ---
+  const [extraName, setExtraName] = useState("");
+  const [extraDays, setExtraDays] = useState<string[]>([]);
+  const [extraStart, setExtraStart] = useState("");
+  const [extraFinish, setExtraFinish] = useState("");
+
+  // --- Update helpers ---
+  function updateRoutineField(activity: string, key: string, value: any) {
+    setRoutine((prev: any) => ({
+      ...prev,
+      [activity]: { ...prev[activity], [key]: value },
+    }));
   }
-  function updateRoutine(field: keyof Routine, value: any) {
-    setChild((c) => ({
-      ...c,
-      routine: { ...c.routine, [field]: value },
+  // Extracurriculars
+  function addExtracurricular() {
+    if (!extraName || extraDays.length === 0 || !extraStart || !extraFinish) return;
+    setRoutine((prev: any) => ({
+      ...prev,
+      extracurriculars: [
+        ...prev.extracurriculars,
+        { name: extraName, days: extraDays, start: extraStart, finish: extraFinish },
+      ],
+    }));
+    setExtraName(""); setExtraDays([]); setExtraStart(""); setExtraFinish("");
+  }
+  function removeExtracurricular(idx: number) {
+    setRoutine((prev: any) => ({
+      ...prev,
+      extracurriculars: prev.extracurriculars.filter((_: any, i: number) => i !== idx),
     }));
   }
 
-  function addExtra() {
-    if (!extra.name || !extra.day) return;
-    updateRoutine("extracurriculars", [
-      ...child.routine.extracurriculars,
-      { ...extra },
-    ]);
-    setExtra({ name: "", day: "", gear: "" });
+  // --- Submit ---
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSave({ name, year, class: className, color, routine });
   }
 
+  // --- UI ---
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSave(child);
-      }}
-    >
-      <h2 className="text-xl font-bold">Add/Edit Child</h2>
-      <input
-        required
-        placeholder="Full Name"
-        value={child.name}
-        onChange={(e) => update("name", e.target.value)}
-        className="input"
-      />
-      <input
-        required
-        placeholder="School Year"
-        value={child.year}
-        onChange={(e) => update("year", e.target.value)}
-        className="input"
-      />
-      <input
-        required
-        placeholder="Class (e.g. 3S)"
-        value={child.class}
-        onChange={(e) => update("class", e.target.value)}
-        className="input"
-      />
-      <label>
-        Color Tag
-        <input
-          type="color"
-          value={child.color}
-          onChange={(e) => update("color", e.target.value)}
-        />
-      </label>
-      <div className="border-t pt-2 mt-2">
-        <h3 className="font-semibold">Routine</h3>
-        <label>PE Days</label>
-        <div className="flex gap-2">
-          {weekdays.map((day) => (
-            <label key={day}>
-              <input
-                type="checkbox"
-                checked={child.routine.peDays.includes(day)}
-                onChange={(e) =>
-                  updateRoutine(
-                    "peDays",
-                    e.target.checked
-                      ? [...child.routine.peDays, day]
-                      : child.routine.peDays.filter((d) => d !== day)
-                  )
-                }
-              />
-              {day}
-            </label>
-          ))}
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Section 1: Basic Info */}
+      <section>
+        <h2 className="text-xl font-bold text-[#004225] mb-3">Child Details</h2>
+        <div className="flex gap-4 flex-wrap items-end">
+          <div>
+            <label className="block font-medium">Name</label>
+            <input required className="input" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="block font-medium">Year</label>
+            <input required className="input" value={year} onChange={e => setYear(e.target.value)} />
+          </div>
+          <div>
+            <label className="block font-medium">Class</label>
+            <input required className="input" value={className} onChange={e => setClassName(e.target.value)} />
+          </div>
+          <div>
+            <label className="block font-medium">Color Tag</label>
+            <input type="color" value={color} onChange={e => setColor(e.target.value)} />
+          </div>
         </div>
-        <label>
-          Library Day
-          <select
-            value={child.routine.libraryDay}
-            onChange={(e) => updateRoutine("libraryDay", e.target.value)}
-          >
-            <option value="">None</option>
-            {weekdays.map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
-          <label className="ml-2">
-            <input
-              type="checkbox"
-              checked={child.routine.libraryBooks}
-              onChange={(e) =>
-                updateRoutine("libraryBooks", e.target.checked)
-              }
-            />{" "}
-            Bring library books
-          </label>
-        </label>
-        <label>
-          Sport Day
-          <select
-            value={child.routine.sportDay}
-            onChange={(e) => updateRoutine("sportDay", e.target.value)}
-          >
-            <option value="">None</option>
-            {weekdays.map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
-          <label className="ml-2">
-            <input
-              type="checkbox"
-              checked={child.routine.sportUniform}
-              onChange={(e) =>
-                updateRoutine("sportUniform", e.target.checked)
-              }
-            />{" "}
-            Sport uniform needed
-          </label>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={child.routine.ccaOn}
-            onChange={(e) =>
-              updateRoutine("ccaOn", e.target.checked)
-            }
-          />{" "}
-          Has CCA
-        </label>
-        {child.routine.ccaOn && (
-          <div className="pl-4 space-y-1">
-            <input
-              placeholder="CCA Name"
-              value={child.routine.cca.name}
-              onChange={(e) =>
-                updateRoutine("cca", {
-                  ...child.routine.cca,
-                  name: e.target.value,
-                })
-              }
-              className="input"
-            />
-            <select
-              value={child.routine.cca.day}
-              onChange={(e) =>
-                updateRoutine("cca", {
-                  ...child.routine.cca,
-                  day: e.target.value,
-                })
-              }
-            >
-              <option value="">Day</option>
-              {weekdays.map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-            <input
-              placeholder="Time"
-              value={child.routine.cca.time}
-              onChange={(e) =>
-                updateRoutine("cca", {
-                  ...child.routine.cca,
-                  time: e.target.value,
-                })
-              }
-              className="input"
+      </section>
+
+      {/* Section 2: Routine Activities */}
+      <section>
+        <h3 className="font-semibold text-lg mb-2">Routine</h3>
+        {["pe", "music", "library", "art", "sports"].map(activity => (
+          <div key={activity} className="mb-2">
+            <label className="font-medium capitalize">{activity} Days</label>
+            <WeekdayCheckboxes
+              selected={routine[activity].days}
+              onChange={days => updateRoutineField(activity, "days", days)}
             />
             <input
-              placeholder="Location"
-              value={child.routine.cca.location}
-              onChange={(e) =>
-                updateRoutine("cca", {
-                  ...child.routine.cca,
-                  location: e.target.value,
-                })
-              }
-              className="input"
+              className="input mt-1 ml-2"
+              placeholder="Bring (optional)"
+              value={routine[activity].bring}
+              onChange={e => updateRoutineField(activity, "bring", e.target.value)}
             />
-            <label>
-              <input
-                type="checkbox"
-                checked={child.routine.cca.pickup}
-                onChange={(e) =>
-                  updateRoutine("cca", {
-                    ...child.routine.cca,
-                    pickup: e.target.checked,
-                  })
-                }
-              />{" "}
-              Needs pickup
-            </label>
           </div>
-        )}
-        <label>
-          <input
-            type="checkbox"
-            checked={child.routine.afterCareOn}
-            onChange={(e) =>
-              updateRoutine("afterCareOn", e.target.checked)
-            }
-          />{" "}
-          After School Care
-        </label>
-        {child.routine.afterCareOn && (
-          <div className="pl-4">
-            <label>
-              Days (comma separated, e.g. Mon,Wed)
-              <input
-                value={child.routine.afterSchoolCare.join(",")}
-                onChange={(e) =>
-                  updateRoutine(
-                    "afterSchoolCare",
-                    e.target.value
-                      .split(",")
-                      .map((v) => v.trim())
-                      .filter(Boolean)
-                  )
-                }
-                className="input"
-              />
-            </label>
-          </div>
-        )}
-        <div>
-          <h4>Extracurriculars</h4>
-          {child.routine.extracurriculars.map((ex, i) => (
-            <div
-              key={i}
-              className="flex gap-2 items-center border rounded px-2 py-1 my-1"
-            >
+        ))}
+      </section>
+
+      {/* Section 3: After School Care */}
+      <section>
+        <h3 className="font-semibold text-lg mb-2">After School Care</h3>
+        <WeekdayCheckboxes
+          selected={routine.afterSchoolCare.days}
+          onChange={days => setRoutine((prev: any) => ({
+            ...prev,
+            afterSchoolCare: { ...prev.afterSchoolCare, days }
+          }))}
+        />
+        <input
+          className="input mt-1 ml-2"
+          placeholder="Closing Time (e.g. 6:30pm)"
+          value={routine.afterSchoolCare.closingTime}
+          onChange={e => setRoutine((prev: any) => ({
+            ...prev,
+            afterSchoolCare: { ...prev.afterSchoolCare, closingTime: e.target.value }
+          }))}
+        />
+      </section>
+
+      {/* Section 4: Extracurriculars */}
+      <section>
+        <h3 className="font-semibold text-lg mb-2">Extracurriculars</h3>
+        <div className="mb-2">
+          {routine.extracurriculars.map((ex: any, i: number) => (
+            <div key={i} className="flex items-center gap-2 mb-1">
               <span>
-                {ex.name} ({ex.day}) {ex.gear && `- ${ex.gear}`}
+                {ex.name} ({ex.days.join(", ")}) {ex.start}-{ex.finish}
               </span>
-              <button
-                type="button"
-                onClick={() =>
-                  updateRoutine(
-                    "extracurriculars",
-                    child.routine.extracurriculars.filter((_, j) => j !== i)
-                  )
-                }
-                className="text-red-500"
-              >
-                Remove
-              </button>
+              <button type="button" className="btn-danger text-xs" onClick={() => removeExtracurricular(i)}>Remove</button>
             </div>
           ))}
-          <div className="flex gap-2 items-end">
-            <input
-              placeholder="Name"
-              value={extra.name}
-              onChange={(e) =>
-                setExtra((x) => ({ ...x, name: e.target.value }))
-              }
-              className="input w-24"
-            />
-            <select
-              value={extra.day}
-              onChange={(e) =>
-                setExtra((x) => ({ ...x, day: e.target.value }))
-              }
-            >
-              <option value="">Day</option>
-              {weekdays.map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-            <input
-              placeholder="Gear"
-              value={extra.gear}
-              onChange={(e) =>
-                setExtra((x) => ({ ...x, gear: e.target.value }))
-              }
-              className="input w-24"
-            />
-            <button type="button" onClick={addExtra} className="btn-primary">
-              Add
-            </button>
-          </div>
         </div>
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary">
-          Save Child
-        </button>
+        <div className="flex flex-wrap gap-2 items-end">
+          <input
+            placeholder="Name"
+            value={extraName}
+            className="input w-24"
+            onChange={e => setExtraName(e.target.value)}
+          />
+          <WeekdayCheckboxes selected={extraDays} onChange={setExtraDays} />
+          <input
+            placeholder="Start"
+            value={extraStart}
+            className="input w-16"
+            onChange={e => setExtraStart(e.target.value)}
+          />
+          <input
+            placeholder="Finish"
+            value={extraFinish}
+            className="input w-16"
+            onChange={e => setExtraFinish(e.target.value)}
+          />
+          <button type="button" className="btn-primary text-xs" onClick={addExtracurricular}>
+            Add
+          </button>
+        </div>
+      </section>
+
+      {/* Section 5: Actions */}
+      <section className="flex gap-3 mt-4">
+        <button type="submit" className="btn-primary">Save Child</button>
         {onCancel && (
           <button type="button" onClick={onCancel} className="btn-secondary">
             Cancel
           </button>
         )}
-      </div>
+      </section>
     </form>
   );
 }
