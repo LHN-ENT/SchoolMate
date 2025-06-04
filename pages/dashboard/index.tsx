@@ -57,6 +57,41 @@ export default function Dashboard() {
   const children = userDoc.childProfile.children || [];
   const preferences = userDoc.preferences || {};
 
+  // Helper to render routine activities
+  function renderRoutine(routine: any) {
+    const activities = ["pe", "music", "library", "art", "sports"];
+    return (
+      <ul className="list-disc ml-6">
+        {activities.map(act => (
+          routine[act]?.days?.length > 0 && (
+            <li key={act} className="mb-1">
+              <span className="font-medium capitalize">{act}:</span> {routine[act].days.join(", ")}
+              {routine[act].bring && <> — <span className="italic text-gray-600">{routine[act].bring}</span></>}
+            </li>
+          )
+        ))}
+        {routine.afterSchoolCare?.days?.length > 0 && (
+          <li>
+            <span className="font-medium">After School Care:</span> {routine.afterSchoolCare.days.join(", ")}
+            {routine.afterSchoolCare.closingTime && <> until {routine.afterSchoolCare.closingTime}</>}
+          </li>
+        )}
+        {routine.extracurriculars?.length > 0 && (
+          <li>
+            <span className="font-medium">Extracurriculars:</span>
+            <ul className="ml-3">
+              {routine.extracurriculars.map((ex: any, i: number) => (
+                <li key={i}>
+                  {ex.name} ({ex.days.join(", ")}) {ex.start}-{ex.finish}
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
+      </ul>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white shadow rounded p-8">
       <h1 className="text-2xl font-bold mb-6 text-[#004225]">Dashboard</h1>
@@ -83,49 +118,21 @@ export default function Dashboard() {
             {child.routine && (
               <div className="mb-2">
                 <div className="font-medium">Routine:</div>
-                <ul className="ml-6 list-disc">
-                  {child.routine.peDays && child.routine.peDays.length > 0 && (
-                    <li>PE Days: {child.routine.peDays.join(', ')}</li>
-                  )}
-                  {child.routine.libraryDay && (
-                    <li>Library Day: {child.routine.libraryDay}</li>
-                  )}
-                  {child.routine.libraryBooks && (
-                    <li>Bring Library Books: Yes</li>
-                  )}
-                  {child.routine.sportDay && (
-                    <li>Sport Day: {child.routine.sportDay}</li>
-                  )}
-                  {child.routine.sportUniform && (
-                    <li>Sport Uniform Needed: Yes</li>
-                  )}
-                  {child.routine.ccaOn && child.routine.cca && child.routine.cca.name && (
-                    <li>
-                      CCA: {child.routine.cca.name} ({child.routine.cca.day} {child.routine.cca.time}) at {child.routine.cca.location} {child.routine.cca.pickup ? "(Needs Pickup)" : ""}
-                    </li>
-                  )}
-                  {child.routine.afterCareOn && (
-                    <li>
-                      After School Care: {child.routine.afterSchoolCare && child.routine.afterSchoolCare.length > 0
-                        ? child.routine.afterSchoolCare.join(", ")
-                        : "Yes"}
-                    </li>
-                  )}
-                  {child.routine.extracurriculars && child.routine.extracurriculars.length > 0 && (
-                    <li>
-                      Extracurriculars:
-                      <ul className="ml-6">
-                        {child.routine.extracurriculars.map((x: any, i: number) => (
-                          <li key={i}>
-                            {x.name} ({x.day}){x.gear ? ` - Gear: ${x.gear}` : ""}
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  )}
-                </ul>
+                {renderRoutine(child.routine)}
               </div>
             )}
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-3">
+              <button className="btn-primary" disabled>
+                Sign In
+              </button>
+              <button className="btn-primary" disabled>
+                Sign Out
+              </button>
+              <button className="btn-secondary" disabled>
+                View Calendar
+              </button>
+            </div>
           </div>
         ))
       )}
