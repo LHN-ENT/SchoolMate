@@ -389,13 +389,48 @@ function ReviewStep({
   loading,
   error,
 }: {
-  children: ChildProfile[];
-  preferences: ParentPreferences;
+  children: any[];
+  preferences: any;
   linkedApps: string[];
   onSubmit: () => void;
   loading: boolean;
   error: string;
 }) {
+  // Helper to render routine activities
+  function renderRoutine(routine: any) {
+    const activities = ["pe", "music", "library", "art", "sports"];
+    return (
+      <ul className="list-disc ml-6">
+        {activities.map(act => (
+          routine[act]?.days?.length > 0 && (
+            <li key={act} className="mb-1">
+              <span className="font-medium capitalize">{act}:</span> {routine[act].days.join(", ")}
+              {routine[act].bring && <> — <span className="italic text-gray-600">{routine[act].bring}</span></>}
+            </li>
+          )
+        ))}
+        {routine.afterSchoolCare?.days?.length > 0 && (
+          <li>
+            <span className="font-medium">After School Care:</span> {routine.afterSchoolCare.days.join(", ")}
+            {routine.afterSchoolCare.closingTime && <> until {routine.afterSchoolCare.closingTime}</>}
+          </li>
+        )}
+        {routine.extracurriculars?.length > 0 && (
+          <li>
+            <span className="font-medium">Extracurriculars:</span>
+            <ul className="ml-3">
+              {routine.extracurriculars.map((ex: any, i: number) => (
+                <li key={i}>
+                  {ex.name} ({ex.days.join(", ")}) {ex.start}-{ex.finish}
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
+      </ul>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <h2 className="text-2xl font-bold text-[#004225] mb-2">Review &amp; Finish</h2>
@@ -419,43 +454,9 @@ function ReviewStep({
                 title="Color Tag"
               ></span>
               {child.routine && (
-                <ul className="ml-4 mt-2 text-sm list-disc">
-                  {child.routine.peDays && child.routine.peDays.length > 0 && (
-                    <li>PE Days: {child.routine.peDays.join(', ')}</li>
-                  )}
-                  {child.routine.libraryDay && (
-                    <li>Library Day: {child.routine.libraryDay}</li>
-                  )}
-                  {child.routine.libraryBooks && <li>Brings Library Books</li>}
-                  {child.routine.sportDay && (
-                    <li>Sport Day: {child.routine.sportDay}</li>
-                  )}
-                  {child.routine.sportUniform && <li>Needs Sport Uniform</li>}
-                  {child.routine.ccaOn && (
-                    <li>
-                      CCA: {child.routine.cca.name} ({child.routine.cca.day} {child.routine.cca.time}) at {child.routine.cca.location} {child.routine.cca.pickup ? "(Needs Pickup)" : ""}
-                    </li>
-                  )}
-                  {child.routine.afterCareOn && (
-                    <li>
-                      After School Care: {child.routine.afterSchoolCare && child.routine.afterSchoolCare.length > 0
-                        ? child.routine.afterSchoolCare.join(", ")
-                        : "Yes"}
-                    </li>
-                  )}
-                  {child.routine.extracurriculars && child.routine.extracurriculars.length > 0 && (
-                    <li>
-                      Extracurriculars:
-                      <ul className="ml-6">
-                        {child.routine.extracurriculars.map((x, i) => (
-                          <li key={i}>
-                            {x.name} ({x.day}){x.gear ? ` - Gear: ${x.gear}` : ""}
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  )}
-                </ul>
+                <div className="ml-2 mt-2 text-sm">
+                  {renderRoutine(child.routine)}
+                </div>
               )}
             </div>
           ))
