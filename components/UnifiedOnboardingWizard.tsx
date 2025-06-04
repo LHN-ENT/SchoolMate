@@ -498,7 +498,7 @@ function AppLinkingStep({
   );
 }
 
-// Review step
+// New beautiful Review step
 function ReviewStep({
   children,
   preferences,
@@ -515,36 +515,93 @@ function ReviewStep({
   error: string;
 }) {
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Review & Finish</h2>
+    <div className="space-y-5">
+      <h2 className="text-2xl font-bold text-[#004225] mb-2">Review &amp; Finish</h2>
       <div>
-        <h3 className="font-semibold">Children:</h3>
-        <ul>
-          {children.map((c, i) => (
-            <li key={i}>
-              <span style={{ background: c.color, padding: "0 8px" }}>
-                {c.name}
-              </span>{" "}
-              ({c.year} {c.class})
-            </li>
-          ))}
-        </ul>
+        <h3 className="font-semibold text-lg mb-1">Children:</h3>
+        {children && children.length > 0 ? (
+          children.map((child, idx) => (
+            <div key={idx} className="mb-2 p-2 bg-[#F7F7F7] rounded">
+              <span className="font-medium">{child.name}</span>{" "}
+              <span>({child.year} {child.class})</span>
+              <span
+                style={{
+                  background: child.color,
+                  display: 'inline-block',
+                  width: 16,
+                  height: 16,
+                  borderRadius: 4,
+                  marginLeft: 6,
+                  verticalAlign: 'middle'
+                }}
+                title="Color Tag"
+              ></span>
+              {child.routine && (
+                <ul className="ml-4 mt-2 text-sm list-disc">
+                  {child.routine.peDays && child.routine.peDays.length > 0 && (
+                    <li>PE Days: {child.routine.peDays.join(', ')}</li>
+                  )}
+                  {child.routine.libraryDay && (
+                    <li>Library Day: {child.routine.libraryDay}</li>
+                  )}
+                  {child.routine.libraryBooks && <li>Brings Library Books</li>}
+                  {child.routine.sportDay && (
+                    <li>Sport Day: {child.routine.sportDay}</li>
+                  )}
+                  {child.routine.sportUniform && <li>Needs Sport Uniform</li>}
+                  {child.routine.ccaOn && (
+                    <li>
+                      CCA: {child.routine.cca.name} ({child.routine.cca.day} {child.routine.cca.time}) at {child.routine.cca.location} {child.routine.cca.pickup ? "(Needs Pickup)" : ""}
+                    </li>
+                  )}
+                  {child.routine.afterCareOn && (
+                    <li>
+                      After School Care: {child.routine.afterSchoolCare && child.routine.afterSchoolCare.length > 0
+                        ? child.routine.afterSchoolCare.join(", ")
+                        : "Yes"}
+                    </li>
+                  )}
+                  {child.routine.extracurriculars && child.routine.extracurriculars.length > 0 && (
+                    <li>
+                      Extracurriculars:
+                      <ul className="ml-6">
+                        {child.routine.extracurriculars.map((x, i) => (
+                          <li key={i}>
+                            {x.name} ({x.day}){x.gear ? ` - Gear: ${x.gear}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="text-gray-500 italic">No children added.</div>
+        )}
       </div>
       <div>
-        <h3 className="font-semibold">Preferences:</h3>
-        <pre className="bg-gray-100 p-2 rounded">
-          {JSON.stringify(preferences, null, 2)}
-        </pre>
-      </div>
-      <div>
-        <h3 className="font-semibold">Linked Apps:</h3>
-        <ul>
-          {linkedApps.length === 0 ? <li>None</li> : linkedApps.map((a) => <li key={a}>{a}</li>)}
+        <h3 className="font-semibold text-lg mb-1">Preferences:</h3>
+        <ul className="list-disc ml-6 space-y-1">
+          <li>Daily Digest: <span className="font-medium">{preferences.dailyDigest ? "Yes" : "No"}</span></li>
+          <li>Weekly Digest: <span className="font-medium">{preferences.weeklyDigest ? "Yes" : "No"}</span></li>
+          <li>Tap to Confirm: <span className="font-medium">{preferences.tapToConfirm ? "Yes" : "No"}</span></li>
+          <li>Assign To Both: <span className="font-medium">{preferences.assignToBoth ? "Yes" : "No"}</span></li>
+          <li>Linked Apps:
+            <span className="font-medium ml-1">
+              {linkedApps && linkedApps.length > 0 ? linkedApps.join(', ') : 'None'}
+            </span>
+          </li>
         </ul>
       </div>
       {error && <div className="text-red-600">{error}</div>}
-      <button className="btn-primary" onClick={onSubmit} disabled={loading}>
-        {loading ? "Saving..." : "Finish & Go to Dashboard"}
+      <button
+        className="bg-[#004225] text-white font-semibold rounded px-4 py-2 w-full hover:bg-[#006645] transition"
+        onClick={onSubmit}
+        disabled={loading}
+      >
+        {loading ? "Saving..." : "Finish &amp; Go to Dashboard"}
       </button>
     </div>
   );
@@ -730,7 +787,7 @@ export default function UnifiedOnboardingWizard() {
               await setDoc(
                 doc(db, "users", session.user.id),
                 {
-                  children,
+                  childProfile: { children },
                   preferences: { ...preferences, linkedApps },
                   onboardingCompleted: true,
                   updatedAt: new Date().toISOString(),
