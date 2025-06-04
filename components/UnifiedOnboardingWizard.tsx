@@ -34,7 +34,6 @@ type ParentPreferences = {
   linkedApps: string[];
 };
 
-import React, { useState } from "react";
 
 // --- Section helpers ---
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
